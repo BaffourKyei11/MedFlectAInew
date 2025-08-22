@@ -23,9 +23,12 @@ import {
   ArrowRight,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  X,
+  BookOpen
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import AuthInterface from "@/components/AuthInterface";
 
 export default function Demo() {
   const [activeDemo, setActiveDemo] = useState("integration");
@@ -50,21 +53,8 @@ export default function Demo() {
     ai: 'disconnected'
   });
   const [isConnecting, setIsConnecting] = useState(false);
-  const [showIntegrationFlow, setShowIntegrationFlow] = useState(false);
-  const [currentIntegrationStep, setCurrentIntegrationStep] = useState(0);
-  const [ehrCredentials, setEhrCredentials] = useState({
-    endpoint: '',
-    clientId: '',
-    clientSecret: '',
-    scope: ''
-  });
-  const [fhirConfig, setFhirConfig] = useState({
-    baseUrl: '',
-    apiKey: '',
-    version: 'R4'
-  });
-  const [authToken, setAuthToken] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthInterface, setShowAuthInterface] = useState(false);
+  const [authComplete, setAuthComplete] = useState(false);
 
   // Simulated hospital data
   const hospitalData = {
@@ -386,9 +376,23 @@ export default function Demo() {
     }
   ];
 
-  const startIntegrationFlow = () => {
-    setShowIntegrationFlow(true);
-    setCurrentIntegrationStep(0);
+  const startAuthFlow = () => {
+    setShowAuthInterface(true);
+  };
+
+  const handleAuthComplete = (data: any) => {
+    setAuthComplete(true);
+    setShowAuthInterface(false);
+    
+    // Simulate connecting to all systems after successful authentication
+    setTimeout(() => {
+      setConnectionStatus({
+        ehr: 'connected',
+        fhir: 'connected',
+        blockchain: 'connected',
+        ai: 'connected'
+      });
+    }, 1000);
   };
 
   const simulateAuthentication = async () => {
@@ -417,6 +421,15 @@ export default function Demo() {
     // Simulate successful FHIR test
     setConnectionStatus(prev => ({ ...prev, fhir: 'connected' }));
   };
+
+  // Show authentication interface if requested
+  if (showAuthInterface) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-medical-blue-50 via-white to-medical-teal-50 p-6">
+        <AuthInterface onAuthComplete={handleAuthComplete} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-medical-blue-50 via-white to-medical-teal-50 p-6">
@@ -813,12 +826,17 @@ export default function Demo() {
                         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
                           <Button 
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={startIntegrationFlow}
+                            onClick={startAuthFlow}
+                            data-testid="button-start-pilot"
                           >
                             <ArrowRight className="w-4 h-4 mr-2" />
                             Start Ghana Pilot Program
                           </Button>
-                          <Button variant="outline" onClick={startIntegrationFlow}>
+                          <Button 
+                            variant="outline" 
+                            onClick={startAuthFlow}
+                            data-testid="button-schedule-call"
+                          >
                             Schedule Implementation Call
                           </Button>
                         </div>

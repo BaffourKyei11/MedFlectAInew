@@ -15,7 +15,11 @@ import {
   type Hospital,
   type InsertHospital,
   type Prediction,
-  type InsertPrediction
+  type InsertPrediction,
+  type ImplementationCall,
+  type InsertImplementationCall,
+  type PilotApplication,
+  type InsertPilotApplication
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -69,6 +73,18 @@ export interface IStorage {
   getPredictionsByPatient(patientId: string): Promise<Prediction[]>;
   createPrediction(prediction: InsertPrediction): Promise<Prediction>;
   updatePrediction(id: string, updates: Partial<Prediction>): Promise<Prediction | undefined>;
+  
+  // Implementation Calls
+  getImplementationCall(id: string): Promise<ImplementationCall | undefined>;
+  getImplementationCallsByUser(userId: string): Promise<ImplementationCall[]>;
+  createImplementationCall(call: InsertImplementationCall): Promise<ImplementationCall>;
+  updateImplementationCall(id: string, updates: Partial<ImplementationCall>): Promise<ImplementationCall | undefined>;
+  
+  // Pilot Applications
+  getPilotApplication(id: string): Promise<PilotApplication | undefined>;
+  getPilotApplicationsByUser(userId: string): Promise<PilotApplication[]>;
+  createPilotApplication(application: InsertPilotApplication): Promise<PilotApplication>;
+  updatePilotApplication(id: string, updates: Partial<PilotApplication>): Promise<PilotApplication | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -81,6 +97,8 @@ export class MemStorage implements IStorage {
   private consentRecords: Map<string, ConsentRecord> = new Map();
   private hospitals: Map<string, Hospital> = new Map();
   private predictions: Map<string, Prediction> = new Map();
+  private implementationCalls: Map<string, ImplementationCall> = new Map();
+  private pilotApplications: Map<string, PilotApplication> = new Map();
 
   constructor() {
     this.initializeSampleData();
@@ -426,6 +444,70 @@ export class MemStorage implements IStorage {
     if (prediction) {
       const updated = { ...prediction, ...updates };
       this.predictions.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  // Implementation Call methods
+  async getImplementationCall(id: string): Promise<ImplementationCall | undefined> {
+    return this.implementationCalls.get(id);
+  }
+
+  async getImplementationCallsByUser(userId: string): Promise<ImplementationCall[]> {
+    return Array.from(this.implementationCalls.values()).filter(
+      call => call.userId === userId
+    );
+  }
+
+  async createImplementationCall(insertCall: InsertImplementationCall): Promise<ImplementationCall> {
+    const call: ImplementationCall = {
+      ...insertCall,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.implementationCalls.set(call.id, call);
+    return call;
+  }
+
+  async updateImplementationCall(id: string, updates: Partial<ImplementationCall>): Promise<ImplementationCall | undefined> {
+    const call = this.implementationCalls.get(id);
+    if (call) {
+      const updated = { ...call, ...updates, updatedAt: new Date() };
+      this.implementationCalls.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  // Pilot Application methods
+  async getPilotApplication(id: string): Promise<PilotApplication | undefined> {
+    return this.pilotApplications.get(id);
+  }
+
+  async getPilotApplicationsByUser(userId: string): Promise<PilotApplication[]> {
+    return Array.from(this.pilotApplications.values()).filter(
+      app => app.userId === userId
+    );
+  }
+
+  async createPilotApplication(insertApp: InsertPilotApplication): Promise<PilotApplication> {
+    const application: PilotApplication = {
+      ...insertApp,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.pilotApplications.set(application.id, application);
+    return application;
+  }
+
+  async updatePilotApplication(id: string, updates: Partial<PilotApplication>): Promise<PilotApplication | undefined> {
+    const app = this.pilotApplications.get(id);
+    if (app) {
+      const updated = { ...app, ...updates, updatedAt: new Date() };
+      this.pilotApplications.set(id, updated);
       return updated;
     }
     return undefined;

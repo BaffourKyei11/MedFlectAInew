@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, jsonb, boolean, integer, decimal, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, jsonb, boolean, integer, decimal, real, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -242,3 +242,70 @@ export type PredictiveModel = typeof predictiveModels.$inferSelect;
 export type InsertPredictiveModel = z.infer<typeof insertPredictiveModelSchema>;
 export type Prediction = typeof predictions.$inferSelect;
 export type InsertPrediction = z.infer<typeof insertPredictionSchema>;
+
+// Additional tables for authentication flow and pilot programs
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// Implementation calls scheduling for pilot programs
+export const implementationCalls = pgTable("implementation_calls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  hospitalId: varchar("hospital_id").references(() => hospitals.id),
+  callType: text("call_type").notNull(), // pilot_program, implementation_call
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  preferredDate: timestamp("preferred_date"),
+  preferredTime: text("preferred_time"),
+  timezone: text("timezone").default("GMT"),
+  notes: text("notes"),
+  status: text("status").default("scheduled"), // scheduled, completed, cancelled
+  meetingLink: text("meeting_link"),
+  authToken: text("auth_token"), // Replit auth token
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Hospital pilot program applications
+export const pilotApplications = pgTable("pilot_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  hospitalName: text("hospital_name").notNull(),
+  location: text("location").notNull(),
+  ehrSystem: text("ehr_system").notNull(),
+  numberOfBeds: integer("number_of_beds"),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  ehrEndpoint: text("ehr_endpoint"),
+  fhirBaseUrl: text("fhir_base_url"),
+  status: text("status").default("pending"), // pending, approved, rejected, active
+  reviewNotes: text("review_notes"),
+  approvedAt: timestamp("approved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertImplementationCallSchema = createInsertSchema(implementationCalls).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPilotApplicationSchema = createInsertSchema(pilotApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ImplementationCall = typeof implementationCalls.$inferSelect;
+export type InsertImplementationCall = z.infer<typeof insertImplementationCallSchema>;
+export type PilotApplication = typeof pilotApplications.$inferSelect;
+export type InsertPilotApplication = z.infer<typeof insertPilotApplicationSchema>;

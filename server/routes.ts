@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
+import { insertImplementationCallSchema, insertPilotApplicationSchema } from "@shared/schema";
 import { groqService } from "./services/groq";
 import { fhirService } from "./services/fhir";
 import { blockchainService } from "./services/blockchain";
@@ -491,6 +492,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
       version: "2.0.0",
       features: ["ai", "fhir", "blockchain", "predictive-analytics", "multi-tenant"]
     });
+  });
+
+  // Authentication and Pilot Program Routes
+  app.post("/api/auth/pilot-program", async (req, res) => {
+    try {
+      const applicationData = insertPilotApplicationSchema.parse(req.body);
+      
+      // Create pilot application
+      const application = await storage.createPilotApplication(applicationData);
+      
+      // Log the application for audit trail
+      await storage.createAuditLog({
+        userId: applicationData.userId,
+        action: "pilot_application_submitted",
+        resource: "pilot_application",
+        resourceId: application.id,
+        details: { hospitalName: applicationData.hospitalName }
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Pilot program application submitted successfully",
+        applicationId: application.id 
+      });
+    } catch (error) {
+      res.status(400).json({ 
+        message: "Failed to submit pilot application",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/auth/implementation-call", async (req, res) => {
+    try {
+      const callData = insertImplementationCallSchema.parse(req.body);
+      
+      // Create implementation call
+      const call = await storage.createImplementationCall(callData);
+      
+      // Log the call request for audit trail
+      await storage.createAuditLog({
+        userId: callData.userId,
+        action: "implementation_call_scheduled",
+        resource: "implementation_call",
+        resourceId: call.id,
+        details: { callType: callData.callType, contactEmail: callData.contactEmail }
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Implementation call scheduled successfully",
+        callId: call.id,
+        meetingLink: call.meetingLink // Would be generated dynamically
+      });
+    } catch (error) {
+      res.status(400).json({ 
+        message: "Failed to schedule implementation call",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/auth/pilot-applications/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const applications = await storage.getPilotApplicationsByUser(userId);
+      res.json(applications);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to get pilot applications",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/auth/implementation-calls/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const calls = await storage.getImplementationCallsByUser(userId);
+      res.json(calls);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to get implementation calls",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/auth/verify-ehr", async (req, res) => {
+    try {
+      const { ehrEndpoint, clientId, clientSecret } = req.body;
+      
+      // Mock EHR verification - in production this would test actual connection
+      const isValid = ehrEndpoint && clientId && clientSecret;
+      
+      if (isValid) {
+        res.json({ 
+          success: true, 
+          message: "EHR connection verified successfully",
+          supportedFeatures: ["patient_data", "clinical_notes", "lab_results"]
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: "Invalid EHR credentials" 
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to verify EHR connection",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/auth/verify-fhir", async (req, res) => {
+    try {
+      const { fhirBaseUrl, apiKey } = req.body;
+      
+      // Mock FHIR verification - in production this would test actual FHIR endpoint
+      const isValid = fhirBaseUrl && apiKey;
+      
+      if (isValid) {
+        res.json({ 
+          success: true, 
+          message: "FHIR endpoint verified successfully",
+          supportedResources: ["Patient", "Observation", "Encounter", "DiagnosticReport"]
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: "Invalid FHIR configuration" 
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to verify FHIR endpoint",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   });
 
   const httpServer = createServer(app);
