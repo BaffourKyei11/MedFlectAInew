@@ -47,15 +47,15 @@ export default function MedflectLogo({
       <div className={`${currentSize.container} ${
         isDark ? 'bg-medical-blue-500' : 'bg-white/20 backdrop-blur-sm'
       } rounded-lg flex items-center justify-center relative overflow-hidden`}>
-        {/* Stethoscope - Main medical symbol */}
-        <Stethoscope className={`${currentSize.stethoscope} ${
-          isDark ? 'text-white' : 'text-white'
-        } absolute transform -translate-x-0.5 -translate-y-0.5`} />
-        
-        {/* Monitor/Computer Screen - Technology symbol */}
+        {/* Monitor/Computer Screen - Technology symbol as base */}
         <Monitor className={`${currentSize.monitor} ${
           isDark ? 'text-white' : 'text-white'
-        } absolute transform translate-x-1 translate-y-1 opacity-80`} />
+        } absolute`} />
+        
+        {/* Stethoscope - Medical symbol displayed on the screen */}
+        <Stethoscope className={`${size === 'lg' ? 'w-4 h-4' : size === 'md' ? 'w-3 h-3' : 'w-2 h-2'} ${
+          isDark ? 'text-white' : 'text-white'
+        } absolute transform translate-y-0.5`} />
       </div>
       
       {showText && (
