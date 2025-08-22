@@ -5,6 +5,8 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 if (!GROQ_BASE_URL || !GROQ_API_KEY) {
   throw new Error("GROQ_BASE_URL and GROQ_API_KEY environment variables must be set");
+}
+
 const GROQ_MODEL = process.env.GROQ_MODEL || "groq/deepseek-r1-distill-llama-70b";
 
 interface GroqResponse {
