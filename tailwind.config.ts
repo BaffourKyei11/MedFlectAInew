@@ -90,6 +90,9 @@ export default {
         sans: ["var(--font-sans)"],
         mono: ["var(--font-mono)"],
       },
+      icon: {
+        stethoscope: "w-4 h-4",
+      },
       keyframes: {
         "accordion-down": {
           from: {
