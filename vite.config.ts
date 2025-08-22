@@ -16,6 +16,7 @@ export default defineConfig({
         ]
       : []),
   ],
+  logLevel: 'info',
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -27,6 +28,32 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 2000, // Increased chunk size warning limit
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('date-fns') || id.includes('zod') || id.includes('class-variance-authority')) {
+              return 'vendor-utils';
+            }
+            return 'vendor-other';
+          }
+        },
+      },
+    },
+    sourcemap: false, // Disable source maps for production
   },
   server: {
     fs: {
