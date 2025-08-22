@@ -42,6 +42,7 @@
     const isDark = variant === "dark";
     const isLight = variant === "light";
 
+<<<<<<< HEAD
     return (
       <Link href="/" className={`flex items-center space-x-3 group cursor-pointer transition-all hover:scale-105 ${className}`} data-testid="medflect-logo">
         <div className={`${currentSize.container} ${
