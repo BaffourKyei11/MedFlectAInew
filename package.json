@@ -12,6 +12,7 @@
     "dev:server": "nodemon --watch server --exec ts-node --esm server/index.ts",
     "start": "node dist/index.js",
     "render-start": "chmod a+x render-start.sh && ./render-start.sh",
+    "render:build": "npm install && npm run build:client && npm run build:server && mkdir -p dist/public && cp -r client/dist/* dist/public/",
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },

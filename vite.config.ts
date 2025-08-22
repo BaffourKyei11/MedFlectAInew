@@ -28,9 +28,9 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
-  base: "/client/dist/",
+  base: "/",
   build: {
-    outDir: path.resolve(import.meta.dirname, "client/dist"),
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     chunkSizeWarningLimit: 2000, // Increased chunk size warning limit
     minify: 'terser',
