@@ -1,7 +1,8 @@
 import { useAIStatus } from "@/hooks/use-ai-status";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Stethoscope, Activity, Zap } from "lucide-react";
+import { Activity, Zap } from "lucide-react";
+import MedflectLogo from "@/components/ui/medflect-logo";
 
 export default function Header() {
   const { data: aiStatus } = useAIStatus();
@@ -11,15 +12,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-medical-blue-500 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-clinical-gray-900">MEDFLECT</h1>
-                <p className="text-xs text-clinical-gray-500">AI Clinical Intelligence</p>
-              </div>
-            </div>
+            <MedflectLogo size="md" variant="dark" showText={true} />
             
             {/* AI Status Indicator */}
             <div data-testid="ai-status-indicator">

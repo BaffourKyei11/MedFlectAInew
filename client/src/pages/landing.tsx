@@ -3,8 +3,8 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import MedflectLogo from "@/components/ui/medflect-logo";
 import { 
-  Stethoscope, 
   Brain, 
   Shield, 
   Database, 
@@ -90,9 +90,7 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Stethoscope className="w-10 h-10 text-white" />
-              </div>
+              <MedflectLogo size="lg" variant="light" showText={false} />
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
@@ -458,14 +456,8 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-medical-blue-500 rounded-lg flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">MEDFLECT</h3>
-                  <p className="text-clinical-gray-400 text-sm">AI Clinical Intelligence</p>
-                </div>
+              <div className="mb-4">
+                <MedflectLogo size="md" variant="light" showText={true} className="text-white" />
               </div>
               <p className="text-clinical-gray-400 mb-4 max-w-md">
                 Transforming hospital data into clinical decisions with AI-powered insights, 
