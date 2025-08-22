@@ -28,7 +28,7 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 
 export default function Demo() {
-  const [activeDemo, setActiveDemo] = useState("exploratory");
+  const [activeDemo, setActiveDemo] = useState("integration");
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [insights, setInsights] = useState<any[]>([]);
@@ -42,6 +42,14 @@ export default function Demo() {
   });
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLiveMode, setIsLiveMode] = useState(false);
+  const [integrationStep, setIntegrationStep] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState({
+    ehr: 'disconnected',
+    fhir: 'disconnected', 
+    blockchain: 'disconnected',
+    ai: 'disconnected'
+  });
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Simulated hospital data
   const hospitalData = {
@@ -252,6 +260,84 @@ export default function Demo() {
     }
   }, [activeDemo, predictions.length]);
 
+  // Integration steps simulation
+  const integrationSteps = [
+    {
+      title: "System Assessment",
+      description: "Evaluate current EHR infrastructure and data readiness",
+      duration: "2-3 days",
+      role: "IT Administrator",
+      tasks: ["Audit existing systems", "Identify data sources", "Check FHIR compliance"]
+    },
+    {
+      title: "FHIR API Setup", 
+      description: "Configure HL7 FHIR R4 endpoints for data exchange",
+      duration: "1-2 weeks",
+      role: "System Administrator",
+      tasks: ["Install FHIR gateway", "Configure endpoints", "Test connections"]
+    },
+    {
+      title: "Blockchain Consent",
+      description: "Deploy smart contracts for patient consent management", 
+      duration: "3-5 days",
+      role: "Security Administrator",
+      tasks: ["Deploy contracts", "Configure wallet", "Test consent flows"]
+    },
+    {
+      title: "AI Model Training",
+      description: "Train ML models on hospital-specific data patterns",
+      duration: "1-2 weeks", 
+      role: "Clinical Data Analyst",
+      tasks: ["Data preprocessing", "Model training", "Validation testing"]
+    },
+    {
+      title: "User Training",
+      description: "Train clinicians and staff on platform usage",
+      duration: "1 week",
+      role: "Clinical Champion",
+      tasks: ["Staff workshops", "Workflow integration", "Competency validation"]
+    },
+    {
+      title: "Go Live",
+      description: "Full deployment with monitoring and support",
+      duration: "Ongoing",
+      role: "All Teams",
+      tasks: ["Production deployment", "24/7 monitoring", "Continuous optimization"]
+    }
+  ];
+
+  const simulateConnection = async (system: string) => {
+    setIsConnecting(true);
+    setConnectionStatus(prev => ({ ...prev, [system]: 'connecting' }));
+    
+    // Simulate connection time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setConnectionStatus(prev => ({ ...prev, [system]: 'connected' }));
+    setIsConnecting(false);
+  };
+
+  const connectAllSystems = async () => {
+    setIsConnecting(true);
+    
+    for (const system of ['ehr', 'fhir', 'blockchain', 'ai']) {
+      setConnectionStatus(prev => ({ ...prev, [system]: 'connecting' }));
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setConnectionStatus(prev => ({ ...prev, [system]: 'connected' }));
+    }
+    
+    setIsConnecting(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'connected': return 'text-green-600 bg-green-50 border-green-200';
+      case 'connecting': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'disconnected': return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-medical-blue-50 via-white to-medical-teal-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -392,7 +478,11 @@ export default function Demo() {
 
         {/* Solution Tabs */}
         <Tabs value={activeDemo} onValueChange={setActiveDemo} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="integration" className="flex items-center space-x-2">
+              <ArrowRight className="w-4 h-4" />
+              <span>Get Started</span>
+            </TabsTrigger>
             <TabsTrigger value="exploratory" className="flex items-center space-x-2">
               <Search className="w-4 h-4" />
               <span>Analysis</span>
@@ -418,6 +508,244 @@ export default function Demo() {
               <span>FHIR</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Integration Tab */}
+          <TabsContent value="integration" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ArrowRight className="w-5 h-5 text-blue-600" />
+                  <span>System Integration & Onboarding</span>
+                </CardTitle>
+                <CardDescription>
+                  Complete guide for connecting your healthcare system to MEDFLECT AI
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8">
+                  {/* Quick Start Guide */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Quick Connection Demo</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                      {[
+                        { system: 'ehr', name: 'EHR System', icon: Database },
+                        { system: 'fhir', name: 'FHIR Gateway', icon: Shield },
+                        { system: 'blockchain', name: 'Blockchain', icon: Shield },
+                        { system: 'ai', name: 'AI Models', icon: Brain }
+                      ].map(({ system, name, icon: Icon }) => (
+                        <Card key={system} className={`border-2 transition-all duration-300 ${getStatusColor(connectionStatus[system as keyof typeof connectionStatus])}`}>
+                          <CardContent className="p-4 text-center">
+                            <Icon className="w-8 h-8 mx-auto mb-2" />
+                            <h4 className="font-semibold text-sm mb-2">{name}</h4>
+                            <div className="space-y-2">
+                              <Badge variant="outline" className={getStatusColor(connectionStatus[system as keyof typeof connectionStatus])}>
+                                {connectionStatus[system as keyof typeof connectionStatus] === 'connecting' && (
+                                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1"></div>
+                                )}
+                                {connectionStatus[system as keyof typeof connectionStatus]}
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => simulateConnection(system)}
+                                disabled={isConnecting || connectionStatus[system as keyof typeof connectionStatus] === 'connected'}
+                                className="w-full text-xs"
+                              >
+                                {connectionStatus[system as keyof typeof connectionStatus] === 'connected' ? 'Connected' : 'Connect'}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <Button 
+                        onClick={connectAllSystems}
+                        disabled={isConnecting}
+                        className="flex items-center space-x-2"
+                        size="lg"
+                      >
+                        <Play className="w-4 h-4" />
+                        <span>Connect All Systems</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Integration Timeline */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Complete Integration Timeline</h3>
+                    <div className="space-y-4">
+                      {integrationSteps.map((step, index) => (
+                        <Card key={index} className={`border-l-4 transition-all duration-300 ${index <= integrationStep ? 'border-l-blue-500 bg-blue-50' : 'border-l-gray-300'}`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index <= integrationStep ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                    {index + 1}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold">{step.title}</h4>
+                                    <p className="text-sm text-gray-600">{step.description}</p>
+                                  </div>
+                                </div>
+                                <div className="ml-11 space-y-2">
+                                  <div className="flex items-center space-x-4 text-sm">
+                                    <Badge variant="outline">{step.role}</Badge>
+                                    <span className="text-gray-600">Duration: {step.duration}</span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {step.tasks.map((task, taskIndex) => (
+                                      <div key={taskIndex} className="flex items-center space-x-2 text-sm text-gray-600">
+                                        <CheckCircle2 className={`w-4 h-4 ${index <= integrationStep ? 'text-green-500' : 'text-gray-400'}`} />
+                                        <span>{task}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setIntegrationStep(index)}
+                                className="ml-4"
+                              >
+                                {index <= integrationStep ? 'Completed' : 'Start Step'}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Technical Requirements */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">System Requirements</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <h5 className="font-semibold text-sm mb-2">EHR Compatibility</h5>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              {['Epic', 'Cerner', 'Allscripts', 'OpenEMR', 'athenahealth', 'NextGen'].map((ehr) => (
+                                <div key={ehr} className="flex items-center space-x-2">
+                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                  <span>{ehr}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-sm mb-2">Technical Stack</h5>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span>FHIR Version:</span>
+                                <span className="font-mono">R4 v4.0.1</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Blockchain:</span>
+                                <span className="font-mono">Ethereum</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>AI Framework:</span>
+                                <span className="font-mono">Groq LLMs</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Security:</span>
+                                <span className="font-mono">OAuth 2.0 + JWT</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Implementation Support</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Users className="w-4 h-4 text-blue-600" />
+                              <span className="font-semibold text-sm">Dedicated Team</span>
+                            </div>
+                            <p className="text-sm text-gray-600">Implementation specialist assigned to your hospital</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="w-4 h-4 text-green-600" />
+                              <span className="font-semibold text-sm">24/7 Support</span>
+                            </div>
+                            <p className="text-sm text-gray-600">Round-the-clock technical assistance during rollout</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Shield className="w-4 h-4 text-purple-600" />
+                              <span className="font-semibold text-sm">Compliance Audit</span>
+                            </div>
+                            <p className="text-sm text-gray-600">Full HIPAA and local regulatory compliance review</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <TrendingUp className="w-4 h-4 text-orange-600" />
+                              <span className="font-semibold text-sm">Performance Guarantee</span>
+                            </div>
+                            <p className="text-sm text-gray-600">Guaranteed 15% efficiency improvement within 6 months</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Regional Implementation */}
+                  <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center space-x-2">
+                        <Users className="w-5 h-5 text-green-600" />
+                        <span>Ghana Healthcare Initiative</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-green-600">3</p>
+                          <p className="text-sm text-gray-600">Major Hospitals Ready</p>
+                          <p className="text-xs text-gray-500">Korle-Bu, Komfo Anokye, 37 Military</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-blue-600">25,000+</p>
+                          <p className="text-sm text-gray-600">Patients Covered</p>
+                          <p className="text-xs text-gray-500">Across Greater Accra & Ashanti</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-purple-600">60 Days</p>
+                          <p className="text-sm text-gray-600">Implementation Time</p>
+                          <p className="text-xs text-gray-500">From contract to full deployment</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-green-200">
+                        <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+                          <Button className="bg-green-600 hover:bg-green-700">
+                            <ArrowRight className="w-4 h-4 mr-2" />
+                            Start Ghana Pilot Program
+                          </Button>
+                          <Button variant="outline">
+                            Schedule Implementation Call
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Exploratory Analysis Tab */}
           <TabsContent value="exploratory" className="space-y-6">
