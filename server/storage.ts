@@ -163,14 +163,65 @@ export class MemStorage implements IStorage {
 
     samplePatients.forEach(patient => this.patients.set(patient.id, patient));
 
+    // Create additional sample patients for comprehensive demo
+    const additionalPatients: Patient[] = [
+      {
+        id: randomUUID(),
+        mrn: "345678",
+        name: "Kwame Asante",
+        dateOfBirth: new Date("1990-03-10"),
+        gender: "male",
+        contactInfo: {
+          phone: "+233-20-456-7890",
+          email: "kwame.asante@email.com",
+          address: "Accra, Ghana"
+        },
+        fhirId: "Patient/345678",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        mrn: "456789",
+        name: "Akosua Mensah",
+        dateOfBirth: new Date("1982-07-22"),
+        gender: "female",
+        contactInfo: {
+          phone: "+233-20-567-8901",
+          email: "akosua.mensah@email.com",
+          address: "Kumasi, Ghana"
+        },
+        fhirId: "Patient/456789",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        mrn: "567890",
+        name: "Yaw Opoku",
+        dateOfBirth: new Date("1975-12-05"),
+        gender: "male",
+        contactInfo: {
+          phone: "+233-20-678-9012",
+          email: "yaw.opoku@email.com",
+          address: "Tamale, Ghana"
+        },
+        fhirId: "Patient/567890",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+    ];
+
+    additionalPatients.forEach(patient => this.patients.set(patient.id, patient));
+
     // Create sample hospital metrics
     const currentMetrics: HospitalMetrics = {
       id: randomUUID(),
       date: new Date(),
-      activePatients: 247,
-      bedOccupancy: "87",
+      activePatients: 2847,
+      bedOccupancy: "85.3",
       criticalAlerts: 3,
-      aiSummariesGenerated: 89,
+      aiSummariesGenerated: 127,
       departmentLoads: {
         emergency: 85,
         icu: 67,

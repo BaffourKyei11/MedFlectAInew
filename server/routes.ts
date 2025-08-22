@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: patient.name,
         mrn: patient.mrn,
         age: patient.dateOfBirth ? Math.floor((Date.now() - patient.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : undefined,
-        gender: patient.gender,
+        gender: patient.gender || undefined,
         chiefComplaint: "Chest pain", // This would come from current encounter
       };
 
@@ -303,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         purpose: consentData.purpose,
         dataTypes: consentData.dataTypes,
         timestamp: new Date(),
-        granularity: consentData.granularity,
+        granularity: consentData.granularity as "full" | "partial" | "research-only",
         clinicianId: consentData.clinicianId,
         hospitalId: consentData.hospitalId
       });

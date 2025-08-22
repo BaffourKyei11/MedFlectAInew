@@ -6,6 +6,13 @@ export interface BlockchainService {
   verifyConsent(consentId: string): Promise<boolean>;
   auditTrail(patientId: string): Promise<AuditBlockchainEntry[]>;
   hashData(data: any): string;
+  getBlockchainStatus(): Promise<{
+    connected: boolean;
+    networkId: number;
+    blockHeight: number;
+    gasPrice: string;
+    pendingTransactions: number;
+  }>;
 }
 
 export interface ConsentRecord {
@@ -224,6 +231,16 @@ export class EthereumBlockchainService implements BlockchainService {
   hashData(data: any): string {
     const dataString = typeof data === 'string' ? data : JSON.stringify(data);
     return createHash('sha256').update(dataString).digest('hex');
+  }
+
+  async getBlockchainStatus(): Promise<{
+    connected: boolean;
+    networkId: number;
+    blockHeight: number;
+    gasPrice: string;
+    pendingTransactions: number;
+  }> {
+    throw new Error('Production Ethereum service not implemented. Use MockBlockchainService for development.');
   }
 }
 

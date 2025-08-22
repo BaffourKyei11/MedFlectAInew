@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AIDemoSection from "@/components/demo/ai-demo-section";
+import PredictiveDemoSection from "@/components/demo/predictive-demo-section";
 import { Progress } from "@/components/ui/progress";
 import { 
   Brain, 
@@ -55,6 +57,20 @@ export default function Demo() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showAuthInterface, setShowAuthInterface] = useState(false);
   const [authComplete, setAuthComplete] = useState(false);
+  const [showIntegrationFlow, setShowIntegrationFlow] = useState(false);
+  const [currentIntegrationStep, setCurrentIntegrationStep] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState('');
+  const [ehrCredentials, setEhrCredentials] = useState({
+    endpoint: '',
+    clientId: '',
+    clientSecret: '',
+    scope: 'patient:read observation:read'
+  });
+  const [fhirConfig, setFhirConfig] = useState({
+    baseUrl: '',
+    version: 'R4'
+  });
 
   // Simulated hospital data
   const hospitalData = {
@@ -1310,6 +1326,11 @@ export default function Demo() {
               </div>
             </div>
           )}
+
+          {/* AI Demo Tab */}
+          <TabsContent value="ai-demo" className="space-y-6">
+            <AIDemoSection />
+          </TabsContent>
 
           {/* Exploratory Analysis Tab */}
           <TabsContent value="exploratory" className="space-y-6">
