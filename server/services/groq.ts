@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-const GROQ_BASE_URL = process.env.GROQ_BASE_URL || "http://91.108.112.45:4000";
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "sk-npvlOAYvZsy6iRqqtM5PNA";
+const GROQ_BASE_URL = process.env.GROQ_BASE_URL;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+if (!GROQ_BASE_URL || !GROQ_API_KEY) {
+  throw new Error("GROQ_BASE_URL and GROQ_API_KEY environment variables must be set");
 const GROQ_MODEL = process.env.GROQ_MODEL || "groq/deepseek-r1-distill-llama-70b";
 
 interface GroqResponse {

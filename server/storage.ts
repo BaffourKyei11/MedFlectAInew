@@ -19,9 +19,22 @@ import {
   type ImplementationCall,
   type InsertImplementationCall,
   type PilotApplication,
-  type InsertPilotApplication
+  type InsertPilotApplication,
+  users,
+  patients,
+  clinicalSummaries,
+  hospitalMetrics,
+  riskAlerts,
+  auditLogs,
+  consentRecords,
+  hospitals,
+  predictions,
+  implementationCalls,
+  pilotApplications
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -565,4 +578,361 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// DatabaseStorage implementation
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const userWithId = {
+      ...insertUser,
+      id: randomUUID(),
+      role: insertUser.role || 'patient',
+      createdAt: new Date()
+    };
+    
+    const [user] = await db
+      .insert(users)
+      .values(userWithId)
+      .returning();
+    return user;
+  }
+
+  // Patient methods
+  async getPatient(id: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(eq(patients.id, id));
+    return patient || undefined;
+  }
+
+  async getPatientByMrn(mrn: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(eq(patients.mrn, mrn));
+    return patient || undefined;
+  }
+
+  async getAllPatients(): Promise<Patient[]> {
+    return await db.select().from(patients);
+  }
+
+  async createPatient(insertPatient: InsertPatient): Promise<Patient> {
+    const patientWithId = {
+      ...insertPatient,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [patient] = await db
+      .insert(patients)
+      .values(patientWithId)
+      .returning();
+    return patient;
+  }
+
+  async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient | undefined> {
+    const [patient] = await db
+      .update(patients)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(patients.id, id))
+      .returning();
+    return patient || undefined;
+  }
+
+  // Clinical Summary methods
+  async getClinicalSummary(id: string): Promise<ClinicalSummary | undefined> {
+    const [summary] = await db.select().from(clinicalSummaries).where(eq(clinicalSummaries.id, id));
+    return summary || undefined;
+  }
+
+  async getClinicalSummariesByPatient(patientId: string): Promise<ClinicalSummary[]> {
+    return await db.select().from(clinicalSummaries).where(eq(clinicalSummaries.patientId, patientId));
+  }
+
+  async createClinicalSummary(insertSummary: InsertClinicalSummary): Promise<ClinicalSummary> {
+    const summaryWithId = {
+      ...insertSummary,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [summary] = await db
+      .insert(clinicalSummaries)
+      .values(summaryWithId)
+      .returning();
+    return summary;
+  }
+
+  async updateClinicalSummary(id: string, updates: Partial<ClinicalSummary>): Promise<ClinicalSummary | undefined> {
+    const [summary] = await db
+      .update(clinicalSummaries)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clinicalSummaries.id, id))
+      .returning();
+    return summary || undefined;
+  }
+
+  // Hospital Metrics methods
+  async getLatestHospitalMetrics(): Promise<HospitalMetrics | undefined> {
+    const [metrics] = await db
+      .select()
+      .from(hospitalMetrics)
+      .orderBy(desc(hospitalMetrics.date))
+      .limit(1);
+    return metrics || undefined;
+  }
+
+  async createHospitalMetrics(metricsData: Omit<HospitalMetrics, 'id' | 'date'>): Promise<HospitalMetrics> {
+    const metricsWithId = {
+      ...metricsData,
+      id: randomUUID(),
+      date: new Date()
+    };
+    
+    const [metrics] = await db
+      .insert(hospitalMetrics)
+      .values(metricsWithId)
+      .returning();
+    return metrics;
+  }
+
+  // Risk Alert methods
+  async getActiveRiskAlerts(): Promise<RiskAlert[]> {
+    return await db
+      .select()
+      .from(riskAlerts)
+      .where(eq(riskAlerts.resolved, false))
+      .orderBy(desc(riskAlerts.createdAt));
+  }
+
+  async getRiskAlertsByPatient(patientId: string): Promise<RiskAlert[]> {
+    return await db.select().from(riskAlerts).where(eq(riskAlerts.patientId, patientId));
+  }
+
+  async createRiskAlert(insertAlert: InsertRiskAlert): Promise<RiskAlert> {
+    const alertWithId = {
+      ...insertAlert,
+      id: randomUUID(),
+      createdAt: new Date()
+    };
+    
+    const [alert] = await db
+      .insert(riskAlerts)
+      .values(alertWithId)
+      .returning();
+    return alert;
+  }
+
+  async resolveRiskAlert(id: string): Promise<boolean> {
+    const [alert] = await db
+      .update(riskAlerts)
+      .set({ resolved: true })
+      .where(eq(riskAlerts.id, id))
+      .returning();
+    return !!alert;
+  }
+
+  // Audit Log methods
+  async getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(limit);
+  }
+
+  async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
+    const logWithId = {
+      ...insertLog,
+      details: insertLog.details || {},
+      id: randomUUID(),
+      timestamp: new Date()
+    };
+    
+    const [log] = await db
+      .insert(auditLogs)
+      .values(logWithId)
+      .returning();
+    return log;
+  }
+
+  // Consent Record methods
+  async getConsentRecord(id: string): Promise<ConsentRecord | undefined> {
+    const [consent] = await db.select().from(consentRecords).where(eq(consentRecords.id, id));
+    return consent || undefined;
+  }
+
+  async getConsentRecordsByPatient(patientId: string): Promise<ConsentRecord[]> {
+    return await db.select().from(consentRecords).where(eq(consentRecords.patientId, patientId));
+  }
+
+  async createConsentRecord(insertConsent: InsertConsentRecord): Promise<ConsentRecord> {
+    const consentWithId = {
+      ...insertConsent,
+      metadata: insertConsent.metadata || {},
+      id: randomUUID(),
+      consentDate: new Date()
+    };
+    
+    const [consent] = await db
+      .insert(consentRecords)
+      .values(consentWithId)
+      .returning();
+    return consent;
+  }
+
+  async updateConsentRecord(id: string, updates: Partial<ConsentRecord>): Promise<ConsentRecord | undefined> {
+    const [consent] = await db
+      .update(consentRecords)
+      .set(updates)
+      .where(eq(consentRecords.id, id))
+      .returning();
+    return consent || undefined;
+  }
+
+  // Hospital methods
+  async getHospital(id: string): Promise<Hospital | undefined> {
+    const [hospital] = await db.select().from(hospitals).where(eq(hospitals.id, id));
+    return hospital || undefined;
+  }
+
+  async getHospitals(): Promise<Hospital[]> {
+    return await db.select().from(hospitals);
+  }
+
+  async createHospital(insertHospital: InsertHospital): Promise<Hospital> {
+    const hospitalWithId = {
+      ...insertHospital,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [hospital] = await db
+      .insert(hospitals)
+      .values(hospitalWithId)
+      .returning();
+    return hospital;
+  }
+
+  async updateHospital(id: string, updates: Partial<Hospital>): Promise<Hospital | undefined> {
+    const [hospital] = await db
+      .update(hospitals)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(hospitals.id, id))
+      .returning();
+    return hospital || undefined;
+  }
+
+  // Prediction methods
+  async getPrediction(id: string): Promise<Prediction | undefined> {
+    const [prediction] = await db.select().from(predictions).where(eq(predictions.id, id));
+    return prediction || undefined;
+  }
+
+  async getPredictionsByPatient(patientId: string): Promise<Prediction[]> {
+    return await db.select().from(predictions).where(eq(predictions.patientId, patientId));
+  }
+
+  async createPrediction(insertPrediction: InsertPrediction): Promise<Prediction> {
+    const predictionWithId = {
+      ...insertPrediction,
+      features: insertPrediction.features || {},
+      id: randomUUID(),
+      predictionDate: new Date()
+    };
+    
+    const [prediction] = await db
+      .insert(predictions)
+      .values(predictionWithId)
+      .returning();
+    return prediction;
+  }
+
+  async updatePrediction(id: string, updates: Partial<Prediction>): Promise<Prediction | undefined> {
+    const [prediction] = await db
+      .update(predictions)
+      .set(updates)
+      .where(eq(predictions.id, id))
+      .returning();
+    return prediction || undefined;
+  }
+
+  // Implementation Call methods
+  async getImplementationCall(id: string): Promise<ImplementationCall | undefined> {
+    const [call] = await db.select().from(implementationCalls).where(eq(implementationCalls.id, id));
+    return call || undefined;
+  }
+
+  async getImplementationCallsByUser(userId: string): Promise<ImplementationCall[]> {
+    return await db.select().from(implementationCalls).where(eq(implementationCalls.userId, userId));
+  }
+
+  async createImplementationCall(insertCall: InsertImplementationCall): Promise<ImplementationCall> {
+    const callWithId = {
+      ...insertCall,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [call] = await db
+      .insert(implementationCalls)
+      .values(callWithId)
+      .returning();
+    return call;
+  }
+
+  async updateImplementationCall(id: string, updates: Partial<ImplementationCall>): Promise<ImplementationCall | undefined> {
+    const [call] = await db
+      .update(implementationCalls)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(implementationCalls.id, id))
+      .returning();
+    return call || undefined;
+  }
+
+  // Pilot Application methods
+  async getPilotApplication(id: string): Promise<PilotApplication | undefined> {
+    const [app] = await db.select().from(pilotApplications).where(eq(pilotApplications.id, id));
+    return app || undefined;
+  }
+
+  async getPilotApplicationsByUser(userId: string): Promise<PilotApplication[]> {
+    return await db.select().from(pilotApplications).where(eq(pilotApplications.userId, userId));
+  }
+
+  async createPilotApplication(insertApp: InsertPilotApplication): Promise<PilotApplication> {
+    const appWithId = {
+      ...insertApp,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const [application] = await db
+      .insert(pilotApplications)
+      .values(appWithId)
+      .returning();
+    return application;
+  }
+
+  async updatePilotApplication(id: string, updates: Partial<PilotApplication>): Promise<PilotApplication | undefined> {
+    const [app] = await db
+      .update(pilotApplications)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(pilotApplications.id, id))
+      .returning();
+    return app || undefined;
+  }
+}
+
+// Use DatabaseStorage for production, MemStorage for development
+export const storage = process.env.NODE_ENV === 'production' ? new DatabaseStorage() : new MemStorage();
