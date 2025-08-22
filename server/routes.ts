@@ -408,10 +408,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/analytics/predict/resources", async (req, res) => {
     try {
       const { hospitalId, timeframe } = req.body;
-      const prediction = await predictiveService.predictResourceNeeds(hospitalId, timeframe);
+      console.log('[Resource Prediction] Request:', { hospitalId, timeframe });
+      
+      // Convert string dates to Date objects
+      const processedTimeframe = {
+        ...timeframe,
+        startDate: new Date(timeframe.startDate),
+        endDate: new Date(timeframe.endDate)
+      };
+      
+      const prediction = await predictiveService.predictResourceNeeds(hospitalId, processedTimeframe);
       res.json(prediction);
     } catch (error) {
-      res.status(500).json({ message: "Failed to predict resource needs" });
+      console.error('[Resource Prediction] Error:', error);
+      res.status(500).json({ 
+        message: "Failed to predict resource needs",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
