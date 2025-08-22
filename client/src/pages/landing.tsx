@@ -496,7 +496,7 @@ export default function Landing() {
 
           <div className="border-t border-clinical-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-clinical-gray-400 text-sm">
-              © 2024 MEDFLECT AI. Built for healthcare transformation in Africa.
+              © 2025 MEDFLECT AI. Built for healthcare transformation in Africa.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
