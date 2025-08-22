@@ -3,7 +3,7 @@ services:
     name: medflectai-backend
     env: node
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: npm run render-start
     envVars:
       - key: NODE_ENV
         value: production
