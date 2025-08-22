@@ -18,21 +18,21 @@ export default function MedflectLogo({
     sm: {
       container: "w-8 h-8",
       stethoscope: "w-4 h-4",
-      monitor: "w-3 h-3",
+      monitor: "w-5 h-5",
       text: "text-sm",
       tagline: "text-xs"
     },
     md: {
       container: "w-10 h-10",
       stethoscope: "w-5 h-5",
-      monitor: "w-4 h-4",
+      monitor: "w-6 h-6",
       text: "text-xl",
       tagline: "text-xs"
     },
     lg: {
       container: "w-16 h-16",
       stethoscope: "w-8 h-8",
-      monitor: "w-6 h-6",
+      monitor: "w-10 h-10",
       text: "text-4xl md:text-6xl",
       tagline: "text-lg"
     }
@@ -53,9 +53,9 @@ export default function MedflectLogo({
         } absolute`} />
         
         {/* Stethoscope - Medical symbol displayed on the screen */}
-        <Stethoscope className={`${size === 'lg' ? 'w-4 h-4' : size === 'md' ? 'w-3 h-3' : 'w-2 h-2'} ${
+        <Stethoscope className={`${size === 'lg' ? 'w-5 h-5' : size === 'md' ? 'w-3 h-3' : 'w-2 h-2'} ${
           isDark ? 'text-white' : 'text-white'
-        } absolute transform translate-y-0.5`} />
+        } absolute`} />
       </div>
       
       {showText && (
