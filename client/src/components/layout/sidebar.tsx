@@ -90,18 +90,15 @@ export default function Sidebar() {
                     key={item.name} 
                     href={item.href}
                     data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className={cn(
+                      "flex items-center px-3 py-2 rounded-lg font-medium transition-colors",
+                      isActive
+                        ? "text-medical-blue-600 bg-medical-blue-50"
+                        : "text-clinical-gray-600 hover:bg-clinical-gray-100"
+                    )}
                   >
-                    <a
-                      className={cn(
-                        "flex items-center px-3 py-2 rounded-lg font-medium transition-colors",
-                        isActive
-                          ? "text-medical-blue-600 bg-medical-blue-50"
-                          : "text-clinical-gray-600 hover:bg-clinical-gray-100"
-                      )}
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </a>
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.name}
                   </Link>
                 );
               })}
