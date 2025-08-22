@@ -10,17 +10,17 @@ services:
       - key: PORT
         value: 10000
       - key: GROQ_BASE_URL
-        value: your_groq_base_url
+        value: http://91.108.112.45:4000
       - key: GROQ_API_KEY
-        value: your_groq_api_key
+        value: sk-npvlOAYvZsy6iRqqtM5PNA
       - key: GROQ_MODEL
         value: groq/deepseek-r1-distill-llama-70b
       - key: VITE_API_BASE
         value: https://medflectainew1.onrender.com
       - key: JWT_SECRET
-        value: your-secure-jwt-secret-key
+        value: o/8bqYfHZo0jfclZV/57tp6bz4mRbtZVXSQXjB08NNUrV3Sch
       - key: CORS_ORIGIN
-        value: https://your-vercel-app.vercel.app
+        value: https://medflect-ai-new.vercel.app
       - key: DATABASE_URL
-        value: your_database_connection_string
+        value: postgresql://postgres:Believein@28ability@db.fdacpeynbzdwumdctqlw.supabase.co:5432/postgres
     plan: free
