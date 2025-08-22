@@ -1,6 +1,11 @@
 node_modules
-.next
+.git
+.gitignore
+.vercel
+.vercelignore
+*.md
 *.log
+.next
 dist
 server
 .replit*
