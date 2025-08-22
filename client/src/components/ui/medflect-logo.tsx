@@ -18,27 +18,21 @@ export default function MedflectLogo({
     sm: {
       container: "w-8 h-8",
       stethoscope: "w-4 h-4",
-<<<<<<< HEAD
       monitor: "w-5 h-5",
->>>>>>> 1a1bfca (Update logo to a stethoscope and computer icon, always linking to the landing page)
       text: "text-sm",
       tagline: "text-xs"
     },
     md: {
       container: "w-10 h-10",
       stethoscope: "w-5 h-5",
-<<<<<<< HEAD
       monitor: "w-6 h-6",
->>>>>>> 1a1bfca (Update logo to a stethoscope and computer icon, always linking to the landing page)
       text: "text-xl",
       tagline: "text-xs"
     },
     lg: {
       container: "w-16 h-16",
       stethoscope: "w-8 h-8",
-<<<<<<< HEAD
       monitor: "w-10 h-10",
->>>>>>> 1a1bfca (Update logo to a stethoscope and computer icon, always linking to the landing page)
       text: "text-4xl md:text-6xl",
       tagline: "text-lg"
     }
@@ -53,7 +47,6 @@ export default function MedflectLogo({
       <div className={`${currentSize.container} ${
         isDark ? 'bg-medical-blue-500' : 'bg-white/20 backdrop-blur-sm'
       } rounded-lg flex items-center justify-center relative overflow-hidden`}>
-<<<<<<< HEAD
         {/* Monitor/Computer Screen - Technology symbol as base */}
         <Monitor className={`${currentSize.monitor} ${
           isDark ? 'text-white' : 'text-white'
@@ -63,6 +56,7 @@ export default function MedflectLogo({
         <Stethoscope className={`${size === 'lg' ? 'w-5 h-5' : size === 'md' ? 'w-3 h-3' : 'w-2 h-2'} ${
           isDark ? 'text-white' : 'text-white'
         } absolute`} />
+        
         {/* Stethoscope - Main medical symbol */}
         <Stethoscope className={`${currentSize.stethoscope} ${
           isDark ? 'text-white' : 'text-white'
@@ -72,7 +66,6 @@ export default function MedflectLogo({
         <Monitor className={`${currentSize.monitor} ${
           isDark ? 'text-white' : 'text-white'
         } absolute transform translate-x-1 translate-y-1 opacity-80`} />
->>>>>>> 1a1bfca (Update logo to a stethoscope and computer icon, always linking to the landing page)
       </div>
       
       {showText && (
