@@ -50,6 +50,21 @@ export default function Demo() {
     ai: 'disconnected'
   });
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showIntegrationFlow, setShowIntegrationFlow] = useState(false);
+  const [currentIntegrationStep, setCurrentIntegrationStep] = useState(0);
+  const [ehrCredentials, setEhrCredentials] = useState({
+    endpoint: '',
+    clientId: '',
+    clientSecret: '',
+    scope: ''
+  });
+  const [fhirConfig, setFhirConfig] = useState({
+    baseUrl: '',
+    apiKey: '',
+    version: 'R4'
+  });
+  const [authToken, setAuthToken] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Simulated hospital data
   const hospitalData = {
@@ -336,6 +351,71 @@ export default function Demo() {
       case 'disconnected': return 'text-gray-600 bg-gray-50 border-gray-200';
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
+  };
+
+  const integrationFlowSteps = [
+    {
+      title: "Hospital Information",
+      description: "Basic hospital details and contact information",
+      component: "hospital-info"
+    },
+    {
+      title: "EHR System Authentication",
+      description: "Connect and authenticate with your EHR system",
+      component: "ehr-auth"
+    },
+    {
+      title: "FHIR Gateway Configuration", 
+      description: "Set up FHIR R4 endpoints and data mapping",
+      component: "fhir-config"
+    },
+    {
+      title: "Test Connection",
+      description: "Verify data flow and system connectivity",
+      component: "test-connection"
+    },
+    {
+      title: "Blockchain Setup",
+      description: "Configure patient consent management",
+      component: "blockchain-setup"
+    },
+    {
+      title: "Deployment",
+      description: "Deploy MEDFLECT AI to production",
+      component: "deployment"
+    }
+  ];
+
+  const startIntegrationFlow = () => {
+    setShowIntegrationFlow(true);
+    setCurrentIntegrationStep(0);
+  };
+
+  const simulateAuthentication = async () => {
+    if (!ehrCredentials.endpoint || !ehrCredentials.clientId) {
+      return;
+    }
+    
+    setIsConnecting(true);
+    
+    // Simulate OAuth2 flow
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJtZWRmbGVjdC1haS1naGFuYSIsImlzcyI6ImtvcmxlLWJ1LWVoci1zeXN0ZW0iLCJzdWIiOiJjbGluaWNpYW4tMTIzIiwic2NvcGUiOiJwYXRpZW50OnJlYWQgb2JzZXJ2YXRpb246cmVhZCJ9';
+    setAuthToken(mockToken);
+    setIsAuthenticated(true);
+    setIsConnecting(false);
+  };
+
+  const testFhirConnection = async () => {
+    if (!fhirConfig.baseUrl) return;
+    
+    setIsConnecting(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsConnecting(false);
+    
+    // Simulate successful FHIR test
+    setConnectionStatus(prev => ({ ...prev, fhir: 'connected' }));
   };
 
   return (
@@ -731,11 +811,14 @@ export default function Demo() {
                       </div>
                       <div className="mt-4 pt-4 border-t border-green-200">
                         <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
-                          <Button className="bg-green-600 hover:bg-green-700">
+                          <Button 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={startIntegrationFlow}
+                          >
                             <ArrowRight className="w-4 h-4 mr-2" />
                             Start Ghana Pilot Program
                           </Button>
-                          <Button variant="outline">
+                          <Button variant="outline" onClick={startIntegrationFlow}>
                             Schedule Implementation Call
                           </Button>
                         </div>
@@ -746,6 +829,469 @@ export default function Demo() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Integration Flow Modal */}
+          {showIntegrationFlow && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold">MEDFLECT AI Integration Setup</h2>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowIntegrationFlow(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Progress Steps */}
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                      {integrationFlowSteps.map((step, index) => (
+                        <div key={index} className="flex flex-col items-center flex-1">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mb-2 ${
+                            index <= currentIntegrationStep ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="text-xs text-center">{step.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${((currentIntegrationStep + 1) / integrationFlowSteps.length) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Step Content */}
+                  <div className="space-y-6">
+                    {currentIntegrationStep === 0 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Hospital Information</CardTitle>
+                          <CardDescription>Please provide your hospital details for customized setup</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Hospital Name</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g., Korle-Bu Teaching Hospital"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">EHR System</label>
+                              <select className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>Select EHR System</option>
+                                <option>Epic</option>
+                                <option>Cerner</option>
+                                <option>OpenEMR</option>
+                                <option>Custom System</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Number of Beds</label>
+                              <input 
+                                type="number" 
+                                placeholder="e.g., 2000"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Location</label>
+                              <input 
+                                type="text" 
+                                placeholder="e.g., Accra, Ghana"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {currentIntegrationStep === 1 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>EHR System Authentication</CardTitle>
+                          <CardDescription>Configure OAuth 2.0 connection to your EHR system</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">EHR Endpoint URL</label>
+                              <input 
+                                type="url" 
+                                placeholder="https://ehrapi.korle-bu.gov.gh/fhir"
+                                value={ehrCredentials.endpoint}
+                                onChange={(e) => setEhrCredentials(prev => ({ ...prev, endpoint: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Client ID</label>
+                              <input 
+                                type="text" 
+                                placeholder="medflect-ai-client-korlebu"
+                                value={ehrCredentials.clientId}
+                                onChange={(e) => setEhrCredentials(prev => ({ ...prev, clientId: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Client Secret</label>
+                              <input 
+                                type="password" 
+                                placeholder="••••••••••••••••"
+                                value={ehrCredentials.clientSecret}
+                                onChange={(e) => setEhrCredentials(prev => ({ ...prev, clientSecret: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">OAuth Scope</label>
+                              <input 
+                                type="text" 
+                                placeholder="patient:read observation:read"
+                                value={ehrCredentials.scope}
+                                onChange={(e) => setEhrCredentials(prev => ({ ...prev, scope: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2">Authentication Flow Preview</h4>
+                            <div className="space-y-2 text-sm font-mono">
+                              <div>POST {ehrCredentials.endpoint || 'https://ehrapi.hospital.com'}/auth/token</div>
+                              <div>Content-Type: application/x-www-form-urlencoded</div>
+                              <div>grant_type=client_credentials&client_id={ehrCredentials.clientId || 'your-client-id'}</div>
+                            </div>
+                          </div>
+
+                          <Button 
+                            onClick={simulateAuthentication}
+                            disabled={isConnecting || !ehrCredentials.endpoint || !ehrCredentials.clientId}
+                            className="w-full"
+                          >
+                            {isConnecting ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Authenticating...
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="w-4 h-4 mr-2" />
+                                Test Authentication
+                              </>
+                            )}
+                          </Button>
+
+                          {isAuthenticated && (
+                            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                <span className="font-semibold text-green-600">Authentication Successful</span>
+                              </div>
+                              <div className="text-sm space-y-1">
+                                <div>Access Token: <span className="font-mono text-xs bg-white px-2 py-1 rounded">{authToken.substring(0, 30)}...</span></div>
+                                <div>Token Type: Bearer</div>
+                                <div>Expires In: 3600 seconds</div>
+                                <div>Scope: {ehrCredentials.scope || 'patient:read observation:read'}</div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {currentIntegrationStep === 2 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>FHIR Gateway Configuration</CardTitle>
+                          <CardDescription>Set up HL7 FHIR R4 endpoints and data mapping</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">FHIR Base URL</label>
+                              <input 
+                                type="url" 
+                                placeholder="https://fhir.korle-bu.gov.gh/R4"
+                                value={fhirConfig.baseUrl}
+                                onChange={(e) => setFhirConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">FHIR Version</label>
+                              <select 
+                                value={fhirConfig.version}
+                                onChange={(e) => setFhirConfig(prev => ({ ...prev, version: e.target.value }))}
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="R4">R4 (4.0.1)</option>
+                                <option value="R5">R5 (5.0.0)</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h4 className="font-semibold">FHIR Resource Endpoints</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {[
+                                { resource: 'Patient', endpoint: '/Patient', status: 'configured' },
+                                { resource: 'Observation', endpoint: '/Observation', status: 'configured' },
+                                { resource: 'Encounter', endpoint: '/Encounter', status: 'pending' },
+                                { resource: 'Medication', endpoint: '/Medication', status: 'pending' }
+                              ].map((item) => (
+                                <div key={item.resource} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <span className="font-medium">{item.resource}</span>
+                                    <div className="text-sm text-gray-600 font-mono">{fhirConfig.baseUrl || 'https://fhir.hospital.com/R4'}{item.endpoint}</div>
+                                  </div>
+                                  <Badge variant={item.status === 'configured' ? 'default' : 'outline'}>
+                                    {item.status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2">Sample FHIR Request</h4>
+                            <div className="space-y-2 text-sm font-mono">
+                              <div>GET {fhirConfig.baseUrl || 'https://fhir.hospital.com/R4'}/Patient?_count=50</div>
+                              <div>Authorization: Bearer {authToken ? authToken.substring(0, 20) + '...' : 'your-access-token'}</div>
+                              <div>Accept: application/fhir+json</div>
+                            </div>
+                          </div>
+
+                          <Button 
+                            onClick={testFhirConnection}
+                            disabled={isConnecting || !fhirConfig.baseUrl}
+                            className="w-full"
+                          >
+                            {isConnecting ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                Testing Connection...
+                              </>
+                            ) : (
+                              <>
+                                <Database className="w-4 h-4 mr-2" />
+                                Test FHIR Connection
+                              </>
+                            )}
+                          </Button>
+
+                          {connectionStatus.fhir === 'connected' && (
+                            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                <span className="font-semibold text-green-600">FHIR Connection Successful</span>
+                              </div>
+                              <div className="text-sm space-y-1">
+                                <div>✓ Patient resources accessible (2,847 patients found)</div>
+                                <div>✓ Observation data available (18,924 observations)</div>
+                                <div>✓ Metadata endpoint responsive</div>
+                                <div>✓ FHIR R4 compliance verified</div>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {currentIntegrationStep === 3 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Test Connection & Data Flow</CardTitle>
+                          <CardDescription>Verify data synchronization and system connectivity</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-4">
+                              <h4 className="font-semibold">Connection Status</h4>
+                              {[
+                                { system: 'EHR Authentication', status: isAuthenticated ? 'connected' : 'disconnected' },
+                                { system: 'FHIR Gateway', status: connectionStatus.fhir },
+                                { system: 'Data Encryption', status: 'connected' },
+                                { system: 'Audit Logging', status: 'connected' }
+                              ].map((item) => (
+                                <div key={item.system} className="flex items-center justify-between p-3 border rounded">
+                                  <span>{item.system}</span>
+                                  <Badge variant={item.status === 'connected' ? 'default' : 'outline'}>
+                                    {item.status === 'connected' ? (
+                                      <><CheckCircle2 className="w-3 h-3 mr-1" />Connected</>
+                                    ) : (
+                                      <><X className="w-3 h-3 mr-1" />Disconnected</>
+                                    )}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="space-y-4">
+                              <h4 className="font-semibold">Sample Data Retrieved</h4>
+                              <div className="bg-gray-50 p-3 rounded text-sm font-mono">
+                                <div className="text-green-600">// Patient Record Sample</div>
+                                <div>{`{`}</div>
+                                <div>&nbsp;&nbsp;"resourceType": "Patient",</div>
+                                <div>&nbsp;&nbsp;"id": "GH-KB-001234",</div>
+                                <div>&nbsp;&nbsp;"name": [{`{`}</div>
+                                <div>&nbsp;&nbsp;&nbsp;&nbsp;"family": "Asante",</div>
+                                <div>&nbsp;&nbsp;&nbsp;&nbsp;"given": ["Kwame"]</div>
+                                <div>&nbsp;&nbsp;{`}`}],</div>
+                                <div>&nbsp;&nbsp;"gender": "male",</div>
+                                <div>&nbsp;&nbsp;"birthDate": "1985-06-15"</div>
+                                <div>{`}`}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                            <h4 className="font-semibold text-green-600 mb-2">Integration Test Results</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <div className="font-medium">Data Throughput</div>
+                                <div>847 patients/min</div>
+                              </div>
+                              <div>
+                                <div className="font-medium">Response Time</div>
+                                <div>avg 120ms</div>
+                              </div>
+                              <div>
+                                <div className="font-medium">Success Rate</div>
+                                <div>99.7%</div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {currentIntegrationStep === 4 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Blockchain Consent Management</CardTitle>
+                          <CardDescription>Deploy smart contracts for patient consent governance</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold mb-2">Smart Contract Deployment</h4>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between p-2 border rounded">
+                                  <span className="text-sm">Patient Consent Contract</span>
+                                  <Badge>Deployed</Badge>
+                                </div>
+                                <div className="flex items-center justify-between p-2 border rounded">
+                                  <span className="text-sm">Audit Trail Contract</span>
+                                  <Badge>Deployed</Badge>
+                                </div>
+                                <div className="flex items-center justify-between p-2 border rounded">
+                                  <span className="text-sm">Access Control Contract</span>
+                                  <Badge variant="outline">Pending</Badge>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Network Configuration</h4>
+                              <div className="space-y-1 text-sm">
+                                <div>Network: Ethereum Mainnet</div>
+                                <div>Contract Address: 0x742d35Cc...a7B8</div>
+                                <div>Gas Price: 20 gwei</div>
+                                <div>Confirmation Blocks: 12</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-purple-50 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2">Consent Management Flow</h4>
+                            <div className="space-y-2 text-sm">
+                              <div>1. Patient identity verified via government ID</div>
+                              <div>2. Consent preferences recorded on blockchain</div>
+                              <div>3. Smart contract validates access requests</div>
+                              <div>4. Immutable audit trail maintained</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {currentIntegrationStep === 5 && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Deployment Complete</CardTitle>
+                          <CardDescription>MEDFLECT AI is now live and ready for clinical use</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                              <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                              <div className="font-semibold">System Online</div>
+                              <div className="text-sm text-gray-600">All services running</div>
+                            </div>
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                              <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                              <div className="font-semibold">Users Trained</div>
+                              <div className="text-sm text-gray-600">47 clinicians certified</div>
+                            </div>
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                              <Activity className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                              <div className="font-semibold">Data Flowing</div>
+                              <div className="text-sm text-gray-600">Real-time analytics active</div>
+                            </div>
+                          </div>
+
+                          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg text-center">
+                            <h3 className="text-xl font-bold mb-2">🎉 Welcome to MEDFLECT AI!</h3>
+                            <p className="text-gray-600 mb-4">Your hospital is now equipped with advanced healthcare analytics</p>
+                            <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+                              <Button onClick={() => setShowIntegrationFlow(false)}>
+                                <Activity className="w-4 h-4 mr-2" />
+                                Access Dashboard
+                              </Button>
+                              <Button variant="outline">
+                                <BookOpen className="w-4 h-4 mr-2" />
+                                View Documentation
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="flex justify-between mt-8">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setCurrentIntegrationStep(Math.max(0, currentIntegrationStep - 1))}
+                      disabled={currentIntegrationStep === 0}
+                    >
+                      Previous
+                    </Button>
+                    <Button 
+                      onClick={() => setCurrentIntegrationStep(Math.min(integrationFlowSteps.length - 1, currentIntegrationStep + 1))}
+                      disabled={currentIntegrationStep === integrationFlowSteps.length - 1}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Exploratory Analysis Tab */}
           <TabsContent value="exploratory" className="space-y-6">
