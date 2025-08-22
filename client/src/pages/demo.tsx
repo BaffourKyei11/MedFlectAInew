@@ -34,6 +34,14 @@ export default function Demo() {
   const [insights, setInsights] = useState<any[]>([]);
   const [nlpQuery, setNlpQuery] = useState("");
   const [predictions, setPredictions] = useState<any[]>([]);
+  const [realTimeData, setRealTimeData] = useState({
+    activePatients: 2847,
+    occupancyRate: 85,
+    criticalAlerts: 3,
+    nursesOnDuty: 180
+  });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isLiveMode, setIsLiveMode] = useState(false);
 
   // Simulated hospital data
   const hospitalData = {
@@ -197,6 +205,53 @@ export default function Demo() {
     ]);
   };
 
+  // Real-time data simulation
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isLiveMode) {
+      interval = setInterval(() => {
+        setRealTimeData(prev => ({
+          activePatients: prev.activePatients + Math.floor(Math.random() * 3) - 1,
+          occupancyRate: Math.max(75, Math.min(95, prev.occupancyRate + (Math.random() - 0.5) * 2)),
+          criticalAlerts: Math.max(0, prev.criticalAlerts + Math.floor(Math.random() * 3) - 1),
+          nursesOnDuty: Math.max(160, Math.min(200, prev.nursesOnDuty + Math.floor(Math.random() * 3) - 1))
+        }));
+
+        // Add random notifications
+        if (Math.random() < 0.3) {
+          const notificationTypes = [
+            "New patient admitted to ICU",
+            "Discharge completed for Patient GH-2847",
+            "Critical alert resolved",
+            "Medication administration reminder",
+            "Lab results available"
+          ];
+          
+          const newNotification = {
+            id: Date.now(),
+            message: notificationTypes[Math.floor(Math.random() * notificationTypes.length)],
+            timestamp: new Date().toLocaleTimeString(),
+            type: Math.random() > 0.7 ? "critical" : "info"
+          };
+          
+          setNotifications(prev => [newNotification, ...prev.slice(0, 4)]);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLiveMode]);
+
+  // Auto-trigger predictions when tab changes
+  useEffect(() => {
+    if (activeDemo === "predictive" && predictions.length === 0) {
+      setTimeout(() => generatePredictions(), 1000);
+    }
+  }, [activeDemo, predictions.length]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-medical-blue-50 via-white to-medical-teal-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -208,9 +263,9 @@ export default function Demo() {
           <p className="text-xl text-clinical-gray-600 mb-6">
             Transforming Hospital Data into Actionable Clinical Intelligence
           </p>
-          <div className="flex items-center justify-center space-x-6 text-sm">
+          <div className="flex items-center justify-center space-x-6 text-sm mb-4">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className={`w-3 h-3 rounded-full ${isLiveMode ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`}></div>
               <span>AI Models Active</span>
             </div>
             <div className="flex items-center space-x-2">
@@ -222,7 +277,57 @@ export default function Demo() {
               <span>Blockchain Secured</span>
             </div>
           </div>
+          
+          {/* Live Mode Toggle */}
+          <div className="flex items-center justify-center space-x-3">
+            <Button
+              variant={isLiveMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsLiveMode(!isLiveMode)}
+              className="flex items-center space-x-2"
+            >
+              <Activity className="w-4 h-4" />
+              <span>{isLiveMode ? 'Live Mode Active' : 'Enable Live Mode'}</span>
+            </Button>
+            {isLiveMode && (
+              <div className="flex items-center space-x-2 text-sm text-green-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Real-time updates enabled</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Live Notifications */}
+        {notifications.length > 0 && isLiveMode && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center space-x-2">
+                <Activity className="w-4 h-4 text-blue-600" />
+                <span>Live Hospital Activity</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {notifications.map((notification) => (
+                  <div 
+                    key={notification.id} 
+                    className={`text-sm p-2 rounded border-l-4 ${
+                      notification.type === 'critical' 
+                        ? 'border-l-red-500 bg-red-50' 
+                        : 'border-l-blue-500 bg-blue-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>{notification.message}</span>
+                      <span className="text-xs text-gray-500">{notification.timestamp}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Problem Statement */}
         <Card className="mb-8 border-l-4 border-l-red-500">
@@ -329,14 +434,22 @@ export default function Demo() {
               <CardContent>
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4">
-                    <Button 
-                      onClick={runExploratoryAnalysis} 
-                      disabled={isAnalyzing}
-                      className="flex items-center space-x-2"
-                    >
-                      {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                      <span>{isAnalyzing ? 'Analyzing...' : 'Start Analysis'}</span>
-                    </Button>
+                    <div className="flex items-center space-x-4">
+                      <Button 
+                        onClick={runExploratoryAnalysis} 
+                        disabled={isAnalyzing}
+                        className="flex items-center space-x-2"
+                      >
+                        {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        <span>{isAnalyzing ? 'Analyzing...' : 'Start Deep Analysis'}</span>
+                      </Button>
+                      {insights.length > 0 && !isAnalyzing && (
+                        <div className="flex items-center space-x-2 text-sm text-green-600">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>{insights.length} insights discovered</span>
+                        </div>
+                      )}
+                    </div>
                     {isAnalyzing && (
                       <div className="flex-1">
                         <Progress value={analysisProgress} className="h-2" />
@@ -432,10 +545,14 @@ export default function Demo() {
                       placeholder="Ask about readmissions, bed utilization, costs, or any hospital metric..."
                       value={nlpQuery}
                       onChange={(e) => setNlpQuery(e.target.value)}
-                      className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                       onKeyPress={(e) => e.key === 'Enter' && processNLPQuery(nlpQuery)}
                     />
-                    <Button onClick={() => processNLPQuery(nlpQuery)}>
+                    <Button 
+                      onClick={() => processNLPQuery(nlpQuery)}
+                      disabled={!nlpQuery.trim()}
+                      className="transition-all duration-200"
+                    >
                       <Search className="w-4 h-4" />
                     </Button>
                   </div>
@@ -460,21 +577,27 @@ export default function Demo() {
                     </div>
                   </div>
 
-                  {/* Mock Response */}
+                  {/* Mock Response with Animation */}
                   {nlpQuery && (
-                    <Card className="bg-blue-50 border-blue-200">
+                    <Card className="bg-blue-50 border-blue-200 animate-in slide-in-from-top duration-300">
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3">
                           <Brain className="w-5 h-5 text-blue-600 mt-1" />
                           <div className="flex-1">
-                            <h4 className="font-semibold mb-2">AI Analysis Result</h4>
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h4 className="font-semibold">AI Analysis Result</h4>
+                              <Badge variant="outline" className="text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                1.3s response
+                              </Badge>
+                            </div>
                             <p className="text-sm mb-3">{processNLPQuery(nlpQuery).answer}</p>
                             {processNLPQuery(nlpQuery).recommendations.length > 0 && (
                               <div>
-                                <p className="text-xs font-medium mb-1">Recommendations:</p>
+                                <p className="text-xs font-medium mb-1">AI Recommendations:</p>
                                 <ul className="text-xs space-y-1">
                                   {processNLPQuery(nlpQuery).recommendations.map((rec, idx) => (
-                                    <li key={idx} className="flex items-center space-x-1">
+                                    <li key={idx} className="flex items-center space-x-1 animate-in slide-in-from-left duration-300" style={{ animationDelay: `${idx * 100}ms` }}>
                                       <CheckCircle2 className="w-3 h-3 text-green-600" />
                                       <span>{rec}</span>
                                     </li>
@@ -490,32 +613,41 @@ export default function Demo() {
 
                   {/* Real-time Metrics Dashboard */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card>
+                    <Card className={`transition-all duration-300 ${isLiveMode ? 'border-blue-300 shadow-md' : ''}`}>
                       <CardContent className="p-4 text-center">
                         <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">{hospitalData.patients}</p>
+                        <p className="text-2xl font-bold transition-all duration-300">
+                          {isLiveMode ? realTimeData.activePatients : hospitalData.patients}
+                        </p>
                         <p className="text-xs text-gray-600">Active Patients</p>
+                        {isLiveMode && <div className="text-xs text-blue-600 mt-1">Live</div>}
                       </CardContent>
                     </Card>
-                    <Card>
+                    <Card className={`transition-all duration-300 ${isLiveMode ? 'border-green-300 shadow-md' : ''}`}>
                       <CardContent className="p-4 text-center">
                         <Activity className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">{hospitalData.occupancyRate}%</p>
+                        <p className="text-2xl font-bold transition-all duration-300">
+                          {isLiveMode ? Math.round(realTimeData.occupancyRate) : hospitalData.occupancyRate}%
+                        </p>
                         <p className="text-xs text-gray-600">Bed Occupancy</p>
+                        {isLiveMode && <div className="text-xs text-green-600 mt-1">Live</div>}
                       </CardContent>
                     </Card>
-                    <Card>
+                    <Card className={`transition-all duration-300 ${isLiveMode ? 'border-orange-300 shadow-md' : ''}`}>
                       <CardContent className="p-4 text-center">
                         <Clock className="w-6 h-6 text-orange-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold">{hospitalData.avgLOS}</p>
                         <p className="text-xs text-gray-600">Avg LOS (days)</p>
                       </CardContent>
                     </Card>
-                    <Card>
+                    <Card className={`transition-all duration-300 ${isLiveMode && realTimeData.criticalAlerts > 2 ? 'border-red-300 shadow-md animate-pulse' : ''}`}>
                       <CardContent className="p-4 text-center">
-                        <RotateCcw className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold">{hospitalData.readmissionRate}%</p>
-                        <p className="text-xs text-gray-600">Readmission Rate</p>
+                        <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${isLiveMode && realTimeData.criticalAlerts > 2 ? 'text-red-600' : 'text-red-600'}`} />
+                        <p className="text-2xl font-bold transition-all duration-300">
+                          {isLiveMode ? realTimeData.criticalAlerts : 3}
+                        </p>
+                        <p className="text-xs text-gray-600">Critical Alerts</p>
+                        {isLiveMode && <div className="text-xs text-red-600 mt-1">Live</div>}
                       </CardContent>
                     </Card>
                   </div>
@@ -538,10 +670,18 @@ export default function Demo() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <Button onClick={generatePredictions} className="flex items-center space-x-2">
-                    <Zap className="w-4 h-4" />
-                    <span>Generate Predictions</span>
-                  </Button>
+                  <div className="flex items-center space-x-4">
+                    <Button onClick={generatePredictions} className="flex items-center space-x-2">
+                      <Zap className="w-4 h-4" />
+                      <span>Generate Predictions</span>
+                    </Button>
+                    {predictions.length > 0 && (
+                      <div className="flex items-center space-x-2 text-sm text-green-600">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>ML models active - predictions updated</span>
+                      </div>
+                    )}
+                  </div>
 
                   {predictions.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
