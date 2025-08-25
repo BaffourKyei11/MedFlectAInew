@@ -9,7 +9,7 @@
     "lib": ["esnext"],
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "outDir": "./dist",
