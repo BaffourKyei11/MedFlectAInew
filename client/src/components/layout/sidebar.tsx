@@ -12,7 +12,8 @@ import {
   Activity,
   RefreshCw,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Cable
 } from "lucide-react";
 
 const navigation = [
@@ -57,6 +58,12 @@ const navigation = [
     href: "/audit",
     icon: ClipboardList,
     section: "Administration"
+  },
+  {
+    name: "EHR Connections",
+    href: "/ehr-connections",
+    icon: Cable,
+    section: "Integration"
   },
 ];
 

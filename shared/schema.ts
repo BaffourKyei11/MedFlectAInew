@@ -220,6 +220,84 @@ export const insertPredictiveModelSchema = createInsertSchema(predictiveModels);
 
 export const insertPredictionSchema = createInsertSchema(predictions);
 
+// EHR Connection Management
+export const ehrConnections = pgTable("ehr_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hospitalId: varchar("hospital_id").references(() => hospitals.id).notNull(),
+  siteName: text("site_name").notNull(),
+  environment: text("environment").notNull(), // test, production
+  ehrVendor: text("ehr_vendor").notNull(),
+  ehrVersion: text("ehr_version"),
+  fhirBaseUrl: text("fhir_base_url").notNull(),
+  authorizationUrl: text("authorization_url"),
+  tokenUrl: text("token_url").notNull(),
+  clientType: text("client_type").notNull(), // smart_user, system
+  clientId: text("client_id").notNull(),
+  clientSecret: text("client_secret"), // encrypted
+  jwksUrl: text("jwks_url"),
+  redirectUri: text("redirect_uri").notNull(),
+  scopes: text("scopes").array().notNull(),
+  testPatientId: text("test_patient_id"),
+  webhookEndpoint: text("webhook_endpoint"),
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  status: text("status").notNull().default("pending"), // pending, validated, active, error, disconnected
+  validationResults: jsonb("validation_results").$type<{
+    capability?: { status: string; message?: string; version?: string; };
+    oauth?: { status: string; message?: string; tokenType?: string; };
+    testPatient?: { status: string; message?: string; patientData?: any; };
+    subscription?: { status: string; message?: string; subscriptionId?: string; };
+  }>(),
+  lastValidated: timestamp("last_validated"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+});
+
+// EHR Data Mapping Configuration
+export const ehrMappings = pgTable("ehr_mappings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").references(() => ehrConnections.id).notNull(),
+  mappingName: text("mapping_name").notNull(),
+  localField: text("local_field").notNull(),
+  fhirResource: text("fhir_resource").notNull(),
+  fhirPath: text("fhir_path").notNull(),
+  codeSystem: text("code_system"),
+  transformationRules: jsonb("transformation_rules"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Webhook Event Queue
+export const webhookEvents = pgTable("webhook_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").references(() => ehrConnections.id).notNull(),
+  eventType: text("event_type").notNull(),
+  resourceType: text("resource_type"),
+  resourceId: text("resource_id"),
+  payload: jsonb("payload").notNull(),
+  signature: text("signature"),
+  verified: boolean("verified").default(false),
+  processed: boolean("processed").default(false),
+  processedAt: timestamp("processed_at"),
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  receivedAt: timestamp("received_at").defaultNow().notNull(),
+});
+
+// EHR Connection Audit Logs
+export const ehrAuditLogs = pgTable("ehr_audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").references(() => ehrConnections.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  action: text("action").notNull(), // validate, connect, disconnect, test, rotate_credentials
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -242,6 +320,37 @@ export type PredictiveModel = typeof predictiveModels.$inferSelect;
 export type InsertPredictiveModel = z.infer<typeof insertPredictiveModelSchema>;
 export type Prediction = typeof predictions.$inferSelect;
 export type InsertPrediction = z.infer<typeof insertPredictionSchema>;
+
+export const insertEhrConnectionSchema = createInsertSchema(ehrConnections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEhrMappingSchema = createInsertSchema(ehrMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
+  id: true,
+  receivedAt: true,
+});
+
+export const insertEhrAuditLogSchema = createInsertSchema(ehrAuditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type EhrConnection = typeof ehrConnections.$inferSelect;
+export type InsertEhrConnection = z.infer<typeof insertEhrConnectionSchema>;
+export type EhrMapping = typeof ehrMappings.$inferSelect;
+export type InsertEhrMapping = z.infer<typeof insertEhrMappingSchema>;
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
+export type EhrAuditLog = typeof ehrAuditLogs.$inferSelect;
+export type InsertEhrAuditLog = z.infer<typeof insertEhrAuditLogSchema>;
 
 // Additional tables for authentication flow and pilot programs
 export const sessions = pgTable(
