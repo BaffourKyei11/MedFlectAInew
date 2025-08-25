@@ -9,7 +9,7 @@
     "build:server": "tsc -p server/tsconfig.json",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
-    "dev:server": "nodemon --watch server --exec ts-node --esm server/index.ts",
+    "dev:server": "nodemon --watch server --exec tsx server/index.ts",
     "start": "node dist/index.js",
     "render-start": "chmod a+x render-start.sh && ./render-start.sh",
     "check": "tsc",

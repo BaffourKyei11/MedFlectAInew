@@ -1,15 +1,6 @@
-// Loader for ts-node ESM compatibility
-import { spawn } from 'child_process';
-
-// Bypass ts-node ESM issues by using tsx
-const server = spawn('npx', ['tsx', 'server/index-actual.ts'], {
-  stdio: 'inherit',
-  env: process.env
-});
-
-server.on('exit', (code) => process.exit(code || 0));
-process.on('SIGINT', () => server.kill('SIGINT'));
-process.on('SIGTERM', () => server.kill('SIGTERM'));
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes";
+import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 app.use(express.json());
