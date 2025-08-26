@@ -8,7 +8,8 @@ import { fhirService } from "./services/fhir";
 import { blockchainService } from "./services/blockchain";
 import { createEnhancedFHIRService } from "./services/enhanced-fhir";
 import { createPredictiveAnalyticsService } from "./services/predictive-analytics";
-import { insertClinicalSummarySchema, insertAuditLogSchema, insertConsentRecordSchema, insertHospitalSchema, insertPredictionSchema } from "@shared/schema";
+import { insertClinicalSummarySchema, insertAuditLogSchema, insertConsentRecordSchema, insertHospitalSchema, insertPredictionSchema, insertEhrConnectionSchema, insertEhrMappingSchema, insertWebhookEventSchema } from "@shared/schema";
+import EhrFhirClient from "./services/ehr-fhir-client";
 
 const enhancedFhirService = createEnhancedFHIRService();
 const predictiveService = createPredictiveAnalyticsService();
@@ -643,6 +644,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Failed to verify FHIR endpoint",
         error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // EHR Connection Routes
+  app.post("/api/connections/validate", async (req, res) => {
+    try {
+      const connectionData = insertEhrConnectionSchema.parse(req.body);
+      
+      // Create temporary connection for validation
+      const tempConnection = {
+        ...connectionData,
+        id: 'temp',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const fhirClient = new EhrFhirClient(tempConnection);
+      const validationResults = await fhirClient.validateConnection();
+      const curlSnippets = fhirClient.generateCurlSnippets();
+
+      // Log audit event
+      await storage.createEhrAuditLog({
+        connectionId: 'temp',
+        userId: 'system', // In production, get from session
+        action: 'validate',
+        details: {
+          siteName: connectionData.siteName,
+          ehrVendor: connectionData.ehrVendor,
+          validationResults
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.json({
+        validationResults,
+        curlSnippets,
+        message: "Connection validation completed"
+      });
+
+    } catch (error: any) {
+      console.error('Connection validation error:', error);
+      res.status(400).json({
+        message: "Validation failed",
+        error: error.message
+      });
+    }
+  });
+
+  app.post("/api/connections", async (req, res) => {
+    try {
+      const connectionData = insertEhrConnectionSchema.parse(req.body);
+      
+      // Encrypt client secret before saving
+      if (connectionData.clientSecret) {
+        connectionData.clientSecret = EhrFhirClient.encryptSecret(connectionData.clientSecret);
+      }
+
+      const connection = await storage.createEhrConnection(connectionData);
+
+      // Log audit event
+      await storage.createEhrAuditLog({
+        connectionId: connection.id,
+        userId: 'system', // In production, get from session
+        action: 'connect',
+        details: {
+          siteName: connection.siteName,
+          ehrVendor: connection.ehrVendor
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      // Don't return sensitive data
+      const { clientSecret, ...safeConnection } = connection;
+      res.status(201).json(safeConnection);
+
+    } catch (error: any) {
+      console.error('Connection creation error:', error);
+      res.status(400).json({
+        message: "Failed to create connection",
+        error: error.message
+      });
+    }
+  });
+
+  app.get("/api/connections", async (req, res) => {
+    try {
+      const { hospitalId } = req.query;
+      
+      let connections;
+      if (hospitalId) {
+        connections = await storage.getEhrConnectionsByHospital(hospitalId as string);
+      } else {
+        // In production, filter by user's hospital access
+        connections = await storage.getEhrConnectionsByHospital('default');
+      }
+
+      // Remove sensitive data
+      const safeConnections = connections.map(({ clientSecret, ...connection }) => connection);
+      res.json(safeConnections);
+
+    } catch (error: any) {
+      console.error('Connection fetch error:', error);
+      res.status(500).json({
+        message: "Failed to fetch connections",
+        error: error.message
+      });
+    }
+  });
+
+  app.get("/api/connections/:id", async (req, res) => {
+    try {
+      const connection = await storage.getEhrConnection(req.params.id);
+      
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+
+      // Remove sensitive data
+      const { clientSecret, ...safeConnection } = connection;
+      res.json(safeConnection);
+
+    } catch (error: any) {
+      console.error('Connection fetch error:', error);
+      res.status(500).json({
+        message: "Failed to fetch connection",
+        error: error.message
+      });
+    }
+  });
+
+  app.patch("/api/connections/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      
+      // Encrypt client secret if provided
+      if (updates.clientSecret) {
+        updates.clientSecret = EhrFhirClient.encryptSecret(updates.clientSecret);
+      }
+
+      const connection = await storage.updateEhrConnection(req.params.id, updates);
+      
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+
+      // Log audit event
+      await storage.createEhrAuditLog({
+        connectionId: connection.id,
+        userId: 'system', // In production, get from session
+        action: 'update',
+        details: { updatedFields: Object.keys(updates) },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      // Remove sensitive data
+      const { clientSecret, ...safeConnection } = connection;
+      res.json(safeConnection);
+
+    } catch (error: any) {
+      console.error('Connection update error:', error);
+      res.status(400).json({
+        message: "Failed to update connection",
+        error: error.message
+      });
+    }
+  });
+
+  app.delete("/api/connections/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteEhrConnection(req.params.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+
+      // Log audit event
+      await storage.createEhrAuditLog({
+        connectionId: req.params.id,
+        userId: 'system', // In production, get from session
+        action: 'disconnect',
+        details: {},
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(204).send();
+
+    } catch (error: any) {
+      console.error('Connection deletion error:', error);
+      res.status(500).json({
+        message: "Failed to delete connection",
+        error: error.message
+      });
+    }
+  });
+
+  // EHR Mapping Routes
+  app.get("/api/connections/:connectionId/mappings", async (req, res) => {
+    try {
+      const mappings = await storage.getEhrMappingsByConnection(req.params.connectionId);
+      res.json(mappings);
+    } catch (error: any) {
+      console.error('Mapping fetch error:', error);
+      res.status(500).json({
+        message: "Failed to fetch mappings",
+        error: error.message
+      });
+    }
+  });
+
+  app.post("/api/connections/:connectionId/mappings", async (req, res) => {
+    try {
+      const mappingData = insertEhrMappingSchema.parse({
+        ...req.body,
+        connectionId: req.params.connectionId
+      });
+
+      const mapping = await storage.createEhrMapping(mappingData);
+      res.status(201).json(mapping);
+
+    } catch (error: any) {
+      console.error('Mapping creation error:', error);
+      res.status(400).json({
+        message: "Failed to create mapping",
+        error: error.message
+      });
+    }
+  });
+
+  // Webhook endpoint for receiving FHIR notifications
+  app.post("/api/webhooks/fhir/:connectionId", async (req, res) => {
+    try {
+      const { connectionId } = req.params;
+      const webhookData = req.body;
+
+      // Validate connection exists
+      const connection = await storage.getEhrConnection(connectionId);
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+
+      // Store webhook event
+      await storage.createWebhookEvent({
+        connectionId,
+        eventType: webhookData.resourceType || 'unknown',
+        payload: webhookData,
+        processed: false
+      });
+
+      // Log audit event
+      await storage.createEhrAuditLog({
+        connectionId,
+        userId: 'system',
+        action: 'webhook_received',
+        details: {
+          eventType: webhookData.resourceType,
+          resourceId: webhookData.id
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+
+      res.status(200).json({ message: "Webhook received successfully" });
+
+    } catch (error: any) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({
+        message: "Failed to process webhook",
+        error: error.message
       });
     }
   });

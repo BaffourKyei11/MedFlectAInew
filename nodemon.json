@@ -1,0 +1,6 @@
+{
+  "watch": ["server", "shared"],
+  "ext": "ts,json,mjs",
+  "exec": "node server.mjs",
+  "ignore": ["node_modules", "client", "dist", "*.test.*"]
+}

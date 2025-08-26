@@ -1,0 +1,59 @@
+Prompt for AI web-builder (concise, copy-paste)
+
+Build an EHR/FHIR Connection module that lets hospital admins securely connect their EHR to our AI health app. Deliver a self-contained UI + backend integration that performs discovery, OAuth validation, test calls, mapping upload, and subscription/webhook verification. Keep the UX simple for non-technical admins and show clear status results.
+
+Scope & behavior (must-haves)
+	•	UI: “Connect EHR” wizard (single page, progressive):
+	•	Fields: Site name, Environment (Test/Prod), EHR vendor & version, FHIR Base URL, Authorization URL, Token URL, Client Type (SMART/user or System), Client ID, Client Secret (or JWT details), Redirect URI (pre-filled), Test Patient ID, Webhook endpoint (optional), Contact name & email.
+	•	Buttons: “Validate”, “Fetch CapabilityStatement”, “Fetch Test Patient”, “Create Test Subscription”, “Save Connection”.
+	•	Show step-by-step status tiles after validation: Capability ✅/⚠️/✖️, OAuth ✅/⚠️/✖️, Test Patient ✅/⚠️/✖️, Subscription ✅/⚠️/✖️.
+	•	Backend endpoints (JSON API):
+	•	POST /api/connections/validate — runs:
+	1.	GET {fhirBase}/metadata (return CapabilityStatement summary).
+	2.	OAuth test: attempt client_credentials exchange or simulate SMART auth flow (PKCE) as appropriate.
+	3.	GET {fhirBase}/Patient/{testId} using token; validate resourceType == Patient.
+Return consolidated status and error messages.
+	•	POST /api/connections — save connection metadata encrypted (KMS/secret store) and return connection id.
+	•	POST /api/connections/:id/subscription-test — create a Subscription resource (if supported) or simulate sending a test webhook; verify signature if EHR supports signing.
+	•	POST /webhook/fhir — webhook receiver: verify signature/HMAC/JWT, enqueue event to durable queue, return 2xx.
+	•	Mapping upload & preview
+	•	Allow CSV upload with columns: local_field,fhir_resource,fhir_path,code_system.
+	•	Show a preview transforming a sample EHR JSON row into a FHIR resource using the mapping.
+
+Security & compliance (non-negotiable)
+	•	All calls use HTTPS. Store client secrets encrypted; never log secrets.
+	•	Use OAuth2 best-practices (PKCE for SMART, short-lived tokens, refresh or client_credentials for system).
+	•	Provide an admin UI to rotate/revoke client secrets and disconnect sites.
+	•	Log audit events: who validated, timestamps, and connection actions.
+
+UX copy & errors (concise)
+	•	Show human-friendly errors: e.g., “OAuth failed — check client ID/secret or redirect URI mismatch.”
+	•	Provide one-click copy of cURL snippets for the admin to test.
+	•	Provide an “Admin Runbook” download (PDF) with filled example values after successful validation.
+
+Acceptance criteria
+	1.	Wizard validates CapabilityStatement, OAuth token exchange, and returns a successful Patient fetch for a given test patient.
+	2.	The Save flow stores connection metadata encrypted and returns a usable connection ID.
+	3.	Webhook endpoint accepts a sample subscription notification, verifies signature, and enqueues the payload (demonstrated by a stored record).
+	4.	Mapping CSV upload shows at least one preview mapping and sample transformed resource.
+	5.	UI shows clear pass/warn/fail status tiles and exposes copyable cURL snippets for each test.
+	6.	Must include minimal automated tests for validate, save connection, and webhook endpoints.
+
+Example minimal cURL snippets to show in UI
+	•	CapabilityStatement:
+
+curl "{fhirBase}/metadata" -H "Accept: application/fhir+json"
+
+	•	Client credentials token:
+
+curl -X POST {tokenUrl} -d "grant_type=client_credentials&client_id={id}&client_secret={secret}&scope=system/Patient.read"
+
+	•	Fetch test patient:
+
+curl -H "Authorization: Bearer {TOKEN}" "{fhirBase}/Patient/{testId}"
+
+
+
+⸻
+
+Deliver a working UI + backend (Node/Express or Python/Flask) wired to a simple in-memory queue for demo; provide instructions for swapping to real KMS/queue. Keep the interface and API stable and return clear JSON errors for all validation steps.
