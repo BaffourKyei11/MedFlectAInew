@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      target: development
+    command: sh -c "pnpm run dev"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/client/node_modules
+    ports:
+      - "3000:3000"
+      - "9229:9229" # For Node.js debugger
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DEBUG=app:*
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - medflect-network
+
+  # Enable hot-reload for development
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      target: development
+    command: sh -c "cd client && pnpm run dev -- --host"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE=http://localhost:3000
+    depends_on:
+      - app
+    networks:
+      - medflect-network
+
+networks:
+  medflect-network:
+    driver: bridge

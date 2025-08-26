@@ -1,11 +1,29 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
+import { corsConfig, securityHeaders, apiLimiter, csrfProtection } from "./middleware/security";
+import { globalErrorHandler } from "./middleware/errorHandler";
+import logger from "./utils/logger";
+import morgan from "morgan";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
+// Development logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
+// Security Middleware
+app.use(corsConfig);
+app.use(securityHeaders);
+app.use(apiLimiter);
+app.use(csrfProtection);
+
+// Body Parsing
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+
+// Request logging
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -19,33 +37,43 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
+    const logData = {
+      method: req.method,
+      path,
+      status: res.statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+      response: capturedJsonResponse
+    };
+
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      if (res.statusCode >= 400) {
+        logger.error(`API Error: ${res.statusCode}`, logData);
+      } else {
+        logger.info(`API Request: ${req.method} ${path}`, logData);
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
     }
   });
 
   next();
 });
 
+// Request logging is now handled by the morgan middleware and our custom logger
+
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+  // Handle 404 - Must be after all other routes
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({
+      status: 'error',
+      message: `Can't find ${req.originalUrl} on this server!`
+    });
   });
+
+  // Global error handling middleware
+  app.use(globalErrorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -66,6 +94,6 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
   });
 })();

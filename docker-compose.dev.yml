@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # Backend Service
+  app:
+    build:
+      context: .
+      target: development
+    command: sh -c "pnpm install && pnpm run dev"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/server/node_modules
+    ports:
+      - "3000:3000"
+      - "9229:9229" # For Node.js debugger
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DEBUG=app:*
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/medflect_ai
+      - JWT_SECRET=dev-jwt-secret
+      - ENCRYPTION_KEY=dev-encryption-key-32-bytes-long
+      - CORS_ORIGIN=*
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - medflect-network
+
+  # Frontend Service with Hot Reload
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      target: development
+    command: sh -c "cd client && pnpm install && pnpm run dev -- --host"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE=http://localhost:3000
+    depends_on:
+      - app
+    networks:
+      - medflect-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=medflect_ai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d medflect_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medflect-network
+
+  # pgAdmin (Database Management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - medflect-network
+
+volumes:
+  postgres_data:
+
+networks:
+  medflect-network:
+    driver: bridge
