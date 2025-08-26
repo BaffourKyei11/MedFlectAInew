@@ -78,8 +78,8 @@ export default function AuditLogs() {
   }) || [];
 
   // Get unique actions and resources for filters
-  const uniqueActions = [...new Set(auditLogs?.map(log => log.action) || [])];
-  const uniqueResources = [...new Set(auditLogs?.map(log => log.resource) || [])];
+  const uniqueActions = Array.from(new Set(auditLogs?.map(log => log.action) || []));
+  const uniqueResources = Array.from(new Set(auditLogs?.map(log => log.resource) || []));
 
   const getActionIcon = (action: string) => {
     switch (action.toLowerCase()) {

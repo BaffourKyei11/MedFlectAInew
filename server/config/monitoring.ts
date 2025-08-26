@@ -105,8 +105,8 @@ export const trackQuery = async <T>(
     logger.error('Database query failed', {
       operation,
       table,
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     
     throw error;
@@ -123,7 +123,9 @@ export const metricsHandler = async (req: Request, res: Response) => {
     const metrics = await register.metrics();
     res.end(metrics);
   } catch (error) {
-    logger.error('Failed to collect metrics', { error });
+    logger.error('Failed to collect metrics', { 
+      error: error instanceof Error ? error.message : String(error) 
+    });
     res.status(500).end('Failed to collect metrics');
   }
 };

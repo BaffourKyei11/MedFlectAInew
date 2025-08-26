@@ -324,6 +324,8 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id: randomUUID(),
+      role: insertUser.role || 'clinician',
+      department: insertUser.department || null,
       createdAt: new Date(),
     };
     this.users.set(user.id, user);
@@ -349,6 +351,10 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      dateOfBirth: insertPatient.dateOfBirth || null,
+      gender: insertPatient.gender || null,
+      contactInfo: insertPatient.contactInfo || null,
+      fhirId: insertPatient.fhirId || null,
     };
     this.patients.set(patient.id, patient);
     return patient;
@@ -381,6 +387,13 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      status: insertSummary.status || 'draft',
+      patientId: insertSummary.patientId || null,
+      userId: insertSummary.userId || null,
+      aiGenerated: insertSummary.aiGenerated ?? true,
+      groqModel: insertSummary.groqModel || null,
+      generationTime: insertSummary.generationTime || null,
+      fhirResourceId: insertSummary.fhirResourceId || null,
     };
     this.clinicalSummaries.set(summary.id, summary);
     return summary;
@@ -430,6 +443,9 @@ export class MemStorage implements IStorage {
       ...insertAlert,
       id: randomUUID(),
       createdAt: new Date(),
+      patientId: insertAlert.patientId || null,
+      resolved: insertAlert.resolved ?? false,
+      riskScore: insertAlert.riskScore || null,
     };
     this.riskAlerts.set(alert.id, alert);
     return alert;
@@ -456,6 +472,13 @@ export class MemStorage implements IStorage {
       ...insertLog,
       id: randomUUID(),
       timestamp: new Date(),
+      userId: insertLog.userId || null,
+      verified: insertLog.verified ?? false,
+      blockchainHash: insertLog.blockchainHash || null,
+      resourceId: insertLog.resourceId || null,
+      transactionHash: insertLog.transactionHash || null,
+      blockNumber: insertLog.blockNumber || null,
+      details: insertLog.details || {},
     };
     this.auditLogs.set(log.id, log);
     return log;
@@ -477,6 +500,13 @@ export class MemStorage implements IStorage {
       ...insertConsent,
       id: randomUUID(),
       consentDate: new Date(),
+      status: insertConsent.status || 'active',
+      expiryDate: insertConsent.expiryDate || null,
+      revokedDate: insertConsent.revokedDate || null,
+      metadata: insertConsent.metadata || {},
+      transactionHash: insertConsent.transactionHash || null,
+      blockNumber: insertConsent.blockNumber || null,
+      blockchainVerified: insertConsent.blockchainVerified ?? false,
     };
     this.consentRecords.set(consent.id, consent);
     return consent;
@@ -507,6 +537,16 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      status: insertHospital.status || 'active',
+      address: insertHospital.address || null,
+      city: insertHospital.city || null,
+      region: insertHospital.region || null,
+      country: insertHospital.country || null,
+      contactEmail: insertHospital.contactEmail || null,
+      contactPhone: insertHospital.contactPhone || null,
+      fhirEndpoint: insertHospital.fhirEndpoint || null,
+      fhirApiKey: insertHospital.fhirApiKey || null,
+      blockchainAddress: insertHospital.blockchainAddress || null,
     };
     this.hospitals.set(hospital.id, hospital);
     return hospital;
@@ -538,6 +578,15 @@ export class MemStorage implements IStorage {
       ...insertPrediction,
       id: randomUUID(),
       predictionDate: new Date(),
+      predictedValue: insertPrediction.predictedValue || null,
+      confidence: insertPrediction.confidence || null,
+      features: insertPrediction.features || {},
+      outcome: insertPrediction.outcome || null,
+      validUntil: insertPrediction.validUntil || null,
+      reviewed: insertPrediction.reviewed ?? false,
+      reviewedBy: insertPrediction.reviewedBy || null,
+      reviewDate: insertPrediction.reviewDate || null,
+      actionTaken: insertPrediction.actionTaken || null,
     };
     this.predictions.set(prediction.id, prediction);
     return prediction;
@@ -570,6 +619,15 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      status: insertCall.status || 'scheduled',
+      hospitalId: insertCall.hospitalId || null,
+      contactPhone: insertCall.contactPhone || null,
+      preferredDate: insertCall.preferredDate || null,
+      preferredTime: insertCall.preferredTime || null,
+      timezone: insertCall.timezone || 'GMT',
+      notes: insertCall.notes || null,
+      meetingLink: insertCall.meetingLink || null,
+      authToken: insertCall.authToken || null,
     };
     this.implementationCalls.set(call.id, call);
     return call;
@@ -602,6 +660,13 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      status: insertApp.status || 'pending',
+      numberOfBeds: insertApp.numberOfBeds || null,
+      contactPhone: insertApp.contactPhone || null,
+      ehrEndpoint: insertApp.ehrEndpoint || null,
+      fhirBaseUrl: insertApp.fhirBaseUrl || null,
+      reviewNotes: insertApp.reviewNotes || null,
+      approvedAt: insertApp.approvedAt || null,
     };
     this.pilotApplications.set(application.id, application);
     return application;
@@ -632,8 +697,17 @@ export class MemStorage implements IStorage {
     const connection: EhrConnection = {
       ...insertConnection,
       id: randomUUID(),
+      status: insertConnection.status || 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
+      clientSecret: insertConnection.clientSecret || null,
+      webhookEndpoint: insertConnection.webhookEndpoint || null,
+      testPatientId: insertConnection.testPatientId || null,
+      ehrVersion: insertConnection.ehrVersion || null,
+      authorizationUrl: insertConnection.authorizationUrl || null,
+      jwksUrl: insertConnection.jwksUrl || null,
+      validationResults: insertConnection.validationResults || null,
+      lastValidated: insertConnection.lastValidated || null,
     };
     this.ehrConnections.set(connection.id, connection);
     return connection;
@@ -670,6 +744,9 @@ export class MemStorage implements IStorage {
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      isActive: insertMapping.isActive ?? true,
+      codeSystem: insertMapping.codeSystem || null,
+      transformationRules: insertMapping.transformationRules || {},
     };
     this.ehrMappings.set(mapping.id, mapping);
     return mapping;
@@ -705,6 +782,14 @@ export class MemStorage implements IStorage {
       ...insertEvent,
       id: randomUUID(),
       receivedAt: new Date(),
+      verified: insertEvent.verified ?? false,
+      resourceId: insertEvent.resourceId || null,
+      resourceType: insertEvent.resourceType || null,
+      errorMessage: insertEvent.errorMessage || null,
+      signature: insertEvent.signature || null,
+      processed: insertEvent.processed ?? false,
+      processedAt: insertEvent.processedAt || null,
+      retryCount: insertEvent.retryCount || 0,
     };
     this.webhookEvents.set(event.id, event);
     return event;
@@ -722,13 +807,15 @@ export class MemStorage implements IStorage {
 
   // EHR Audit Log methods
   async getEhrAuditLogs(connectionId?: string, limit: number = 100): Promise<EhrAuditLog[]> {
-    let logs = Array.from(this.ehrAuditLogs.values());
+    let query = db.select().from(ehrAuditLogs);
+    
     if (connectionId) {
-      logs = logs.filter(log => log.connectionId === connectionId);
+      query = query.where(eq(ehrAuditLogs.connectionId, connectionId)) as any;
     }
-    return logs
-      .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0))
-      .slice(0, limit);
+    
+    return await query
+      .orderBy(desc(ehrAuditLogs.timestamp))
+      .limit(limit);
   }
 
   async createEhrAuditLog(insertLog: InsertEhrAuditLog): Promise<EhrAuditLog> {
@@ -736,6 +823,9 @@ export class MemStorage implements IStorage {
       ...insertLog,
       id: randomUUID(),
       timestamp: new Date(),
+      details: insertLog.details || {},
+      ipAddress: insertLog.ipAddress || null,
+      userAgent: insertLog.userAgent || null,
     };
     this.ehrAuditLogs.set(log.id, log);
     return log;
@@ -1044,7 +1134,16 @@ export class DatabaseStorage implements IStorage {
       ...insertCall,
       id: randomUUID(),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      status: insertCall.status || 'scheduled',
+      hospitalId: insertCall.hospitalId || null,
+      contactPhone: insertCall.contactPhone || null,
+      preferredDate: insertCall.preferredDate || null,
+      preferredTime: insertCall.preferredTime || null,
+      timezone: insertCall.timezone || 'GMT',
+      notes: insertCall.notes || null,
+      meetingLink: insertCall.meetingLink || null,
+      authToken: insertCall.authToken || null,
     };
     
     const [call] = await db
@@ -1111,8 +1210,17 @@ export class DatabaseStorage implements IStorage {
     const connectionWithId = {
       ...insertConnection,
       id: randomUUID(),
+      status: insertConnection.status || 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
+      clientSecret: insertConnection.clientSecret || null,
+      webhookEndpoint: insertConnection.webhookEndpoint || null,
+      testPatientId: insertConnection.testPatientId || null,
+      ehrVersion: insertConnection.ehrVersion || null,
+      authorizationUrl: insertConnection.authorizationUrl || null,
+      jwksUrl: insertConnection.jwksUrl || null,
+      validationResults: insertConnection.validationResults || null,
+      lastValidated: insertConnection.lastValidated || null,
     };
     
     const [connection] = await db
@@ -1190,6 +1298,14 @@ export class DatabaseStorage implements IStorage {
       ...insertEvent,
       id: randomUUID(),
       receivedAt: new Date(),
+      verified: insertEvent.verified ?? false,
+      resourceId: insertEvent.resourceId || null,
+      resourceType: insertEvent.resourceType || null,
+      errorMessage: insertEvent.errorMessage || null,
+      signature: insertEvent.signature || null,
+      processed: insertEvent.processed ?? false,
+      processedAt: insertEvent.processedAt || null,
+      retryCount: insertEvent.retryCount || 0,
     };
     
     const [event] = await db
@@ -1213,7 +1329,7 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(ehrAuditLogs);
     
     if (connectionId) {
-      query = query.where(eq(ehrAuditLogs.connectionId, connectionId));
+      query = query.where(eq(ehrAuditLogs.connectionId, connectionId)) as any;
     }
     
     return await query
@@ -1226,6 +1342,9 @@ export class DatabaseStorage implements IStorage {
       ...insertLog,
       id: randomUUID(),
       timestamp: new Date(),
+      details: insertLog.details || {},
+      ipAddress: insertLog.ipAddress || null,
+      userAgent: insertLog.userAgent || null,
     };
     
     const [log] = await db

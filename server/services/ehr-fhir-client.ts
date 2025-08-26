@@ -446,7 +446,7 @@ export class EhrFhirClient {
       }
     }
     
-    return [...new Set(resources)];
+    return Array.from(new Set(resources));
   }
 
   private getPatientDisplay(patient: any): string {

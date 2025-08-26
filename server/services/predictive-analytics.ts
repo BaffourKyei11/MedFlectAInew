@@ -473,7 +473,6 @@ export class MLPredictiveAnalyticsService implements PredictiveAnalyticsService 
         status: 'deployed',
         endpoint: `/api/predict/${modelId}`,
         rollbackPlan: 'Automatic rollback to previous version on performance degradation',
-        monitoringEnabled: true
       };
     } catch (error) {
       return {
@@ -481,7 +480,6 @@ export class MLPredictiveAnalyticsService implements PredictiveAnalyticsService 
         deploymentId,
         status: 'failed',
         rollbackPlan: 'N/A',
-        monitoringEnabled: false
       };
     }
   }
@@ -540,10 +538,10 @@ export class MLPredictiveAnalyticsService implements PredictiveAnalyticsService 
 
     return {
       totalRequests: requests.length,
-      successfulPredictions: successCount,
-      failedPredictions: failCount,
+      completedRequests: successCount,
+      failedRequests: failCount,
       results,
-      processingTime: Date.now() - startTime
+      executionTime: Date.now() - startTime
     };
   }
 

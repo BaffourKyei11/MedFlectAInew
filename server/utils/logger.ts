@@ -64,10 +64,12 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Create a stream for morgan
-logger.stream = {
-  write: (message: string) => {
-    logger.info(message.trim());
+const loggerWithStream = Object.assign(logger, {
+  stream: {
+    write: (message: string) => {
+      logger.info(message.trim());
+    },
   },
-};
+});
 
-export default logger;
+export default loggerWithStream;

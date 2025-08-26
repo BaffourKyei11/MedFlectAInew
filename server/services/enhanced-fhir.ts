@@ -448,7 +448,7 @@ export class ProductionFHIRService implements EnhancedFHIRService {
         }
 
         // Find next page
-        nextUrl = bundle.link?.find(l => l.relation === 'next')?.url || null;
+        nextUrl = bundle.link?.find((l: any) => l.relation === 'next')?.url || null;
       }
     } catch (error) {
       errors.push(error instanceof Error ? error.message : 'Unknown error');

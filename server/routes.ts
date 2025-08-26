@@ -657,6 +657,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tempConnection = {
         ...connectionData,
         id: 'temp',
+        status: 'active',
+        clientSecret: connectionData.clientSecret || null,
+        ehrVersion: connectionData.ehrVersion || null,
+        authorizationUrl: connectionData.authorizationUrl || null,
+        jwksUrl: connectionData.jwksUrl || null,
+        testPatientId: connectionData.testPatientId || null,
+        webhookEndpoint: connectionData.webhookEndpoint || null,
+        validationResults: null,
+        lastValidated: null,
         createdAt: new Date(),
         updatedAt: new Date()
       };
