@@ -20,6 +20,14 @@ import {
   type InsertImplementationCall,
   type PilotApplication,
   type InsertPilotApplication,
+  type EhrConnection,
+  type InsertEhrConnection,
+  type EhrMapping,
+  type InsertEhrMapping,
+  type WebhookEvent,
+  type InsertWebhookEvent,
+  type EhrAuditLog,
+  type InsertEhrAuditLog,
   users,
   patients,
   clinicalSummaries,
@@ -30,7 +38,11 @@ import {
   hospitals,
   predictions,
   implementationCalls,
-  pilotApplications
+  pilotApplications,
+  ehrConnections,
+  ehrMappings,
+  webhookEvents,
+  ehrAuditLogs
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -98,6 +110,30 @@ export interface IStorage {
   getPilotApplicationsByUser(userId: string): Promise<PilotApplication[]>;
   createPilotApplication(application: InsertPilotApplication): Promise<PilotApplication>;
   updatePilotApplication(id: string, updates: Partial<PilotApplication>): Promise<PilotApplication | undefined>;
+
+  // EHR Connections
+  getEhrConnection(id: string): Promise<EhrConnection | undefined>;
+  getEhrConnectionsByHospital(hospitalId: string): Promise<EhrConnection[]>;
+  createEhrConnection(connection: InsertEhrConnection): Promise<EhrConnection>;
+  updateEhrConnection(id: string, updates: Partial<EhrConnection>): Promise<EhrConnection | undefined>;
+  deleteEhrConnection(id: string): Promise<boolean>;
+
+  // EHR Mappings
+  getEhrMapping(id: string): Promise<EhrMapping | undefined>;
+  getEhrMappingsByConnection(connectionId: string): Promise<EhrMapping[]>;
+  createEhrMapping(mapping: InsertEhrMapping): Promise<EhrMapping>;
+  updateEhrMapping(id: string, updates: Partial<EhrMapping>): Promise<EhrMapping | undefined>;
+  deleteEhrMapping(id: string): Promise<boolean>;
+
+  // Webhook Events
+  getWebhookEvent(id: string): Promise<WebhookEvent | undefined>;
+  getWebhookEventsByConnection(connectionId: string): Promise<WebhookEvent[]>;
+  createWebhookEvent(event: InsertWebhookEvent): Promise<WebhookEvent>;
+  updateWebhookEvent(id: string, updates: Partial<WebhookEvent>): Promise<WebhookEvent | undefined>;
+
+  // EHR Audit Logs
+  getEhrAuditLogs(connectionId?: string, limit?: number): Promise<EhrAuditLog[]>;
+  createEhrAuditLog(log: InsertEhrAuditLog): Promise<EhrAuditLog>;
 }
 
 export class MemStorage implements IStorage {
@@ -112,6 +148,10 @@ export class MemStorage implements IStorage {
   private predictions: Map<string, Prediction> = new Map();
   private implementationCalls: Map<string, ImplementationCall> = new Map();
   private pilotApplications: Map<string, PilotApplication> = new Map();
+  private ehrConnections: Map<string, EhrConnection> = new Map();
+  private ehrMappings: Map<string, EhrMapping> = new Map();
+  private webhookEvents: Map<string, WebhookEvent> = new Map();
+  private ehrAuditLogs: Map<string, EhrAuditLog> = new Map();
 
   constructor() {
     this.initializeSampleData();
@@ -576,6 +616,130 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
+
+  // EHR Connection methods
+  async getEhrConnection(id: string): Promise<EhrConnection | undefined> {
+    return this.ehrConnections.get(id);
+  }
+
+  async getEhrConnectionsByHospital(hospitalId: string): Promise<EhrConnection[]> {
+    return Array.from(this.ehrConnections.values()).filter(
+      connection => connection.hospitalId === hospitalId
+    );
+  }
+
+  async createEhrConnection(insertConnection: InsertEhrConnection): Promise<EhrConnection> {
+    const connection: EhrConnection = {
+      ...insertConnection,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.ehrConnections.set(connection.id, connection);
+    return connection;
+  }
+
+  async updateEhrConnection(id: string, updates: Partial<EhrConnection>): Promise<EhrConnection | undefined> {
+    const connection = this.ehrConnections.get(id);
+    if (connection) {
+      const updated = { ...connection, ...updates, updatedAt: new Date() };
+      this.ehrConnections.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async deleteEhrConnection(id: string): Promise<boolean> {
+    return this.ehrConnections.delete(id);
+  }
+
+  // EHR Mapping methods
+  async getEhrMapping(id: string): Promise<EhrMapping | undefined> {
+    return this.ehrMappings.get(id);
+  }
+
+  async getEhrMappingsByConnection(connectionId: string): Promise<EhrMapping[]> {
+    return Array.from(this.ehrMappings.values()).filter(
+      mapping => mapping.connectionId === connectionId
+    );
+  }
+
+  async createEhrMapping(insertMapping: InsertEhrMapping): Promise<EhrMapping> {
+    const mapping: EhrMapping = {
+      ...insertMapping,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.ehrMappings.set(mapping.id, mapping);
+    return mapping;
+  }
+
+  async updateEhrMapping(id: string, updates: Partial<EhrMapping>): Promise<EhrMapping | undefined> {
+    const mapping = this.ehrMappings.get(id);
+    if (mapping) {
+      const updated = { ...mapping, ...updates, updatedAt: new Date() };
+      this.ehrMappings.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async deleteEhrMapping(id: string): Promise<boolean> {
+    return this.ehrMappings.delete(id);
+  }
+
+  // Webhook Event methods
+  async getWebhookEvent(id: string): Promise<WebhookEvent | undefined> {
+    return this.webhookEvents.get(id);
+  }
+
+  async getWebhookEventsByConnection(connectionId: string): Promise<WebhookEvent[]> {
+    return Array.from(this.webhookEvents.values()).filter(
+      event => event.connectionId === connectionId
+    );
+  }
+
+  async createWebhookEvent(insertEvent: InsertWebhookEvent): Promise<WebhookEvent> {
+    const event: WebhookEvent = {
+      ...insertEvent,
+      id: randomUUID(),
+      receivedAt: new Date(),
+    };
+    this.webhookEvents.set(event.id, event);
+    return event;
+  }
+
+  async updateWebhookEvent(id: string, updates: Partial<WebhookEvent>): Promise<WebhookEvent | undefined> {
+    const event = this.webhookEvents.get(id);
+    if (event) {
+      const updated = { ...event, ...updates };
+      this.webhookEvents.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  // EHR Audit Log methods
+  async getEhrAuditLogs(connectionId?: string, limit: number = 100): Promise<EhrAuditLog[]> {
+    let logs = Array.from(this.ehrAuditLogs.values());
+    if (connectionId) {
+      logs = logs.filter(log => log.connectionId === connectionId);
+    }
+    return logs
+      .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0))
+      .slice(0, limit);
+  }
+
+  async createEhrAuditLog(insertLog: InsertEhrAuditLog): Promise<EhrAuditLog> {
+    const log: EhrAuditLog = {
+      ...insertLog,
+      id: randomUUID(),
+      timestamp: new Date(),
+    };
+    this.ehrAuditLogs.set(log.id, log);
+    return log;
+  }
 }
 
 // DatabaseStorage implementation
@@ -931,6 +1095,144 @@ export class DatabaseStorage implements IStorage {
       .where(eq(pilotApplications.id, id))
       .returning();
     return app || undefined;
+  }
+
+  // EHR Connection methods
+  async getEhrConnection(id: string): Promise<EhrConnection | undefined> {
+    const [connection] = await db.select().from(ehrConnections).where(eq(ehrConnections.id, id));
+    return connection || undefined;
+  }
+
+  async getEhrConnectionsByHospital(hospitalId: string): Promise<EhrConnection[]> {
+    return await db.select().from(ehrConnections).where(eq(ehrConnections.hospitalId, hospitalId));
+  }
+
+  async createEhrConnection(insertConnection: InsertEhrConnection): Promise<EhrConnection> {
+    const connectionWithId = {
+      ...insertConnection,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    const [connection] = await db
+      .insert(ehrConnections)
+      .values(connectionWithId)
+      .returning();
+    return connection;
+  }
+
+  async updateEhrConnection(id: string, updates: Partial<EhrConnection>): Promise<EhrConnection | undefined> {
+    const [connection] = await db
+      .update(ehrConnections)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(ehrConnections.id, id))
+      .returning();
+    return connection || undefined;
+  }
+
+  async deleteEhrConnection(id: string): Promise<boolean> {
+    const result = await db.delete(ehrConnections).where(eq(ehrConnections.id, id));
+    return result.rowCount! > 0;
+  }
+
+  // EHR Mapping methods
+  async getEhrMapping(id: string): Promise<EhrMapping | undefined> {
+    const [mapping] = await db.select().from(ehrMappings).where(eq(ehrMappings.id, id));
+    return mapping || undefined;
+  }
+
+  async getEhrMappingsByConnection(connectionId: string): Promise<EhrMapping[]> {
+    return await db.select().from(ehrMappings).where(eq(ehrMappings.connectionId, connectionId));
+  }
+
+  async createEhrMapping(insertMapping: InsertEhrMapping): Promise<EhrMapping> {
+    const mappingWithId = {
+      ...insertMapping,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    const [mapping] = await db
+      .insert(ehrMappings)
+      .values(mappingWithId)
+      .returning();
+    return mapping;
+  }
+
+  async updateEhrMapping(id: string, updates: Partial<EhrMapping>): Promise<EhrMapping | undefined> {
+    const [mapping] = await db
+      .update(ehrMappings)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(ehrMappings.id, id))
+      .returning();
+    return mapping || undefined;
+  }
+
+  async deleteEhrMapping(id: string): Promise<boolean> {
+    const result = await db.delete(ehrMappings).where(eq(ehrMappings.id, id));
+    return result.rowCount! > 0;
+  }
+
+  // Webhook Event methods
+  async getWebhookEvent(id: string): Promise<WebhookEvent | undefined> {
+    const [event] = await db.select().from(webhookEvents).where(eq(webhookEvents.id, id));
+    return event || undefined;
+  }
+
+  async getWebhookEventsByConnection(connectionId: string): Promise<WebhookEvent[]> {
+    return await db.select().from(webhookEvents).where(eq(webhookEvents.connectionId, connectionId));
+  }
+
+  async createWebhookEvent(insertEvent: InsertWebhookEvent): Promise<WebhookEvent> {
+    const eventWithId = {
+      ...insertEvent,
+      id: randomUUID(),
+      receivedAt: new Date(),
+    };
+    
+    const [event] = await db
+      .insert(webhookEvents)
+      .values(eventWithId)
+      .returning();
+    return event;
+  }
+
+  async updateWebhookEvent(id: string, updates: Partial<WebhookEvent>): Promise<WebhookEvent | undefined> {
+    const [event] = await db
+      .update(webhookEvents)
+      .set({ ...updates })
+      .where(eq(webhookEvents.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  // EHR Audit Log methods
+  async getEhrAuditLogs(connectionId?: string, limit: number = 100): Promise<EhrAuditLog[]> {
+    let query = db.select().from(ehrAuditLogs);
+    
+    if (connectionId) {
+      query = query.where(eq(ehrAuditLogs.connectionId, connectionId));
+    }
+    
+    return await query
+      .orderBy(desc(ehrAuditLogs.timestamp))
+      .limit(limit);
+  }
+
+  async createEhrAuditLog(insertLog: InsertEhrAuditLog): Promise<EhrAuditLog> {
+    const logWithId = {
+      ...insertLog,
+      id: randomUUID(),
+      timestamp: new Date(),
+    };
+    
+    const [log] = await db
+      .insert(ehrAuditLogs)
+      .values(logWithId)
+      .returning();
+    return log;
   }
 }
 

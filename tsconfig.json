@@ -19,5 +19,15 @@
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"]
     }
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "compilerOptions": {
+      "module": "ESNext",
+      "moduleResolution": "node",
+      "target": "ES2022",
+      "allowImportingTsExtensions": false
+    }
   }
 }

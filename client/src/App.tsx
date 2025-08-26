@@ -16,6 +16,7 @@ import Analytics from "@/pages/analytics";
 import ConsentManagement from "@/pages/consent-management";
 import AuditLogs from "@/pages/audit-logs";
 import WorkflowBuilder from "@/pages/workflow-builder";
+import EhrConnections from "@/pages/ehr-connections";
 import NotFound from "@/pages/not-found";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/workflow" component={() => <AppLayout><WorkflowBuilder /></AppLayout>} />
       <Route path="/consent" component={() => <AppLayout><ConsentManagement /></AppLayout>} />
       <Route path="/audit" component={() => <AppLayout><AuditLogs /></AppLayout>} />
+      <Route path="/ehr-connections" component={() => <AppLayout><EhrConnections /></AppLayout>} />
       <Route component={NotFound} />
     </Switch>
   );

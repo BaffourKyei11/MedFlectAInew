@@ -1,26 +1,57 @@
 services:
   - type: web
-    name: MedFlectAInew1
+    name: medflect-ai-backend
     env: node
-    buildCommand: npm install && cd client && npm install && cd ..
-    startCommand: ./render-start.sh
+    region: oregon  # Choose the closest region to your users
+    buildCommand: ./render-start.sh build
+    startCommand: ./render-start.sh start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=1024
       - key: GROQ_BASE_URL
-        value: http://91.108.112.45:4000
+        fromService:
+          name: medflect-ai-backend
+          type: web
+          envVarKey: GROQ_BASE_URL
       - key: GROQ_API_KEY
-        value: sk-npvlOAYvZsy6iRqqtM5PNA
+        fromService:
+          name: medflect-ai-backend
+          type: web
+          envVarKey: GROQ_API_KEY
       - key: GROQ_MODEL
         value: groq/deepseek-r1-distill-llama-70b
       - key: VITE_API_BASE
-        value: https://medflectainew1.onrender.com
+        value: https://medflect-ai-backend.onrender.com
       - key: JWT_SECRET
-        value: o/8bqYfHZo0jfclZV/57tp6bz4mRbtZVXSQXjB08NNUrV3Sch
+        fromService:
+          name: medflect-ai-backend
+          type: web
+          envVarKey: JWT_SECRET
       - key: CORS_ORIGIN
-        value: https://medflect-ai-new.vercel.app
+        value: https://medflect-ai.vercel.app
       - key: DATABASE_URL
-        value: postgresql://postgres:Believein@28ability@db.fdacpeynbzdwumdctqlw.supabase.co:5432/postgres
+        fromService:
+          name: medflect-ai-db
+          type: postgres
+          envVarKey: DATABASE_URL
+      - key: ENCRYPTION_KEY
+        fromService:
+          name: medflect-ai-backend
+          type: web
+          envVarKey: ENCRYPTION_KEY
+    healthCheckPath: /api/health
+    autoDeploy: true
     plan: free
+
+  # Database service
+  - type: postgres
+    name: medflect-ai-db
+    plan: free
+    databaseName: medflect_ai
+    user: medflect_ai_user
+    ipAllowList:
+      - 0.0.0.0/0  # Restrict this to Render's IPs in production

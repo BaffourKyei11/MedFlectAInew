@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: medflect-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: GROQ_BASE_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: groq/deepseek-r1-distill-llama-70b
+      - key: FRONTEND_URL
+        sync: false
+databases:
+  - name: medflect-postgres
+    plan: starter
+    region: oregon
