@@ -1,55 +1,24 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
+// Define a minimal schema to work around TypeScript issues
 interface MedflectDB extends DBSchema {
   patients: {
     key: string;
-    value: {
-      id: string;
-      mrn: string;
-      name: string;
-      dateOfBirth?: string;
-      gender?: string;
-      contactInfo?: any;
-      fhirId?: string;
-      updatedAt: string;
-    };
+    value: any;
   };
   summaries: {
     key: string;
-    value: {
-      id: string;
-      patientId: string;
-      type: string;
-      content: string;
-      status: string;
-      createdAt: string;
-      updatedAt: string;
-    };
+    value: any;
+    indexes: any;
   };
   metrics: {
     key: string;
-    value: {
-      id: string;
-      date: string;
-      activePatients: number;
-      bedOccupancy: string;
-      criticalAlerts: number;
-      aiSummariesGenerated: number;
-      departmentLoads: any;
-    };
+    value: any;
   };
   riskAlerts: {
     key: string;
-    value: {
-      id: string;
-      patientId: string;
-      type: string;
-      severity: string;
-      message: string;
-      riskScore?: string;
-      resolved: boolean;
-      createdAt: string;
-    };
+    value: any;
+    indexes: any;
   };
 }
 
@@ -66,16 +35,16 @@ class OfflineStorage {
           db.createObjectStore('patients', { keyPath: 'id' });
         }
         if (!db.objectStoreNames.contains('summaries')) {
-          const summaryStore = db.createObjectStore('summaries', { keyPath: 'id' });
-          summaryStore.createIndex('patientId', 'patientId');
+          const summariesStore = db.createObjectStore('summaries', { keyPath: 'id' });
+          summariesStore.createIndex('by-patient', 'patientId', { unique: false });
         }
         if (!db.objectStoreNames.contains('metrics')) {
           db.createObjectStore('metrics', { keyPath: 'id' });
         }
         if (!db.objectStoreNames.contains('riskAlerts')) {
-          const alertStore = db.createObjectStore('riskAlerts', { keyPath: 'id' });
-          alertStore.createIndex('patientId', 'patientId');
-          alertStore.createIndex('resolved', 'resolved');
+          const store = db.createObjectStore('riskAlerts', { keyPath: 'id' });
+          store.createIndex('by-resolved', 'resolved');
+          store.createIndex('by-patient', 'patientId');
         }
       },
     });
@@ -110,7 +79,7 @@ class OfflineStorage {
 
   async getSummariesByPatient(patientId: string) {
     const db = await this.init();
-    return db.getAllFromIndex('summaries', 'patientId', patientId);
+    return db.getAllFromIndex('summaries', 'by-patient', patientId);
   }
 
   async saveSummary(summary: any) {
@@ -134,7 +103,7 @@ class OfflineStorage {
 
   async getRiskAlerts() {
     const db = await this.init();
-    return db.getAllFromIndex('riskAlerts', 'resolved', false);
+    return db.getAllFromIndex('riskAlerts', 'by-resolved', false);
   }
 
   async saveRiskAlert(alert: any) {
