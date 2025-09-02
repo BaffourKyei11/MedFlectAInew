@@ -9,17 +9,15 @@
     "url": "https://github.com/your-username/MedFlectAI"
   },
   "scripts": {
-    "install-pnpm": "npm install -g pnpm",
-    "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
-    "build": "run-s build:client build:server",
-    "build:client": "cd client && pnpm install && pnpm run build",
+    "build": "npm-run-all -s build:client build:server",
+    "build:client": "cd client && npm install && npm run build",
     "build:server": "tsc -p server/tsconfig.json",
-    "dev": "run-p dev:server dev:client",
-    "dev:client": "cd client && pnpm run dev",
+    "dev": "npm-run-all -p dev:server dev:client",
+    "dev:client": "cd client && npm run dev",
     "dev:server": "nodemon --watch server --exec tsx server/index.ts",
     "start": "node dist/index.js",
-    "start:prod": "NODE_ENV=production node dist/index.js",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "test": "vitest run",
@@ -36,7 +34,6 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "packageManager": "pnpm@8.10.0",
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
