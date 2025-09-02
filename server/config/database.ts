@@ -1,51 +1,11 @@
-// Use dynamic imports to avoid type issues at compile time
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+// Import required modules
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 import { env } from './env';
 import logger from '../utils/logger';
 
-// Simple WebSocket implementation that will be used only if needed
-class SimpleWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-
-  readyState: number;
-  onopen: (() => void) | null = null;
-  onerror: ((error: any) => void) | null = null;
-  onclose: (() => void) | null = null;
-  onmessage: ((event: { data: any }) => void) | null = null;
-
-  constructor(url: string) {
-    this.readyState = SimpleWebSocket.CONNECTING;
-    // In a real implementation, you would create a WebSocket connection here
-    // For now, we'll simulate a successful connection
-    setTimeout(() => {
-      this.readyState = SimpleWebSocket.OPEN;
-      if (this.onopen) this.onopen();
-    }, 0);
-  }
-
-  send(data: any) {
-    // In a real implementation, send data through the WebSocket
-    console.log('WebSocket send:', data);
-  }
-
-  close() {
-    this.readyState = SimpleWebSocket.CLOSING;
-    setTimeout(() => {
-      this.readyState = SimpleWebSocket.CLOSED;
-      if (this.onclose) this.onclose();
-    }, 0);
-  }
-}
-
-// Configure WebSocket for Neon
-const neonConfig = {
-  webSocketConstructor: SimpleWebSocket as any,
-};
+// Database connection configuration
 
 // Database connection configuration
 interface DatabaseConfig {
@@ -71,22 +31,22 @@ let pool: Pool;
 
 try {
   pool = new Pool({
-    connectionString: dbConfig.connectionString,
-    max: dbConfig.max,
-    min: dbConfig.min,
-    idleTimeoutMillis: dbConfig.idleTimeoutMillis,
-    connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
+    connectionString: env.DATABASE_URL,
+    max: 10, // Maximum number of clients the pool should contain
+    min: 2,  // Minimum number of clients to keep in the pool
+    idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
+    connectionTimeoutMillis: 2000, // How long to wait when connecting a new client
   });
   
   // Test the connection
-  pool.on('connect', (client: PoolClient) => {
+  pool.on('connect', (client) => {
     logger.debug('New database client connected', {
       clientId: client?.processID,
       timestamp: new Date().toISOString(),
     });
   });
 
-  pool.on('error', (err: Error, client?: PoolClient) => {
+  pool.on('error', (err: Error, client) => {
     logger.error('Database pool error', {
       error: err.message,
       clientId: client?.processID,
