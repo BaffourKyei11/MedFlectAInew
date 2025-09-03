@@ -1,4 +1,5 @@
-import express, { type Request, Response } from "express";
+import 'dotenv/config';
+import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { corsConfig, securityHeaders, apiLimiter, csrfProtection } from "./middleware/security";
@@ -92,7 +93,6 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
   }, () => {
     logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
   });

@@ -78,6 +78,7 @@ export default {
           50: "var(--clinical-gray-50)",
           100: "var(--clinical-gray-100)",
           200: "var(--clinical-gray-200)",
+          300: "var(--clinical-gray-300)",
           400: "var(--clinical-gray-400)",
           500: "var(--clinical-gray-500)",
           600: "var(--clinical-gray-600)",

@@ -2,153 +2,115 @@
 
 A comprehensive healthcare analytics platform with AI-powered clinical summaries, FHIR integration, and predictive analytics.
 
-## 🚀 Quick Deploy
+## 🚀 Quick Start
 
-### Frontend (Vercel)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/medflect-ai/tree/main/frontend&env=VITE_API_BASE_URL&envDescription=Backend%20API%20URL&envLink=https://github.com/your-username/medflect-ai%23environment-variables)
+### Deploy to Production
+- **Frontend**: [Deploy to Vercel](https://vercel.com/new/clone?repository-url=https://github.com/your-username/medflect-ai/tree/main/frontend&env=VITE_API_BASE_URL&envDescription=Backend%20API%20URL&envLink=https://github.com/your-username/medflect-ai%23environment-variables)
+- **Backend**: [Deploy to Render](https://render.com/deploy?repo=https://github.com/your-username/medflect-ai/tree/main/backend)
 
-### Backend (Render)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/your-username/medflect-ai/tree/main/backend)
-
-## 📁 Project Structure
-
-```
-├── frontend/          # React + Vite frontend
-│   ├── src/
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── vercel.json
-├── backend/           # Express.js API server
-│   ├── services/
-│   ├── shared/
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── render.yaml
-└── README.md
-```
-
-## 🔧 Local Development
-
-### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database
-
-### Frontend Setup
+### Local Development
 ```bash
-cd frontend
+# Install dependencies
 npm install
+cd client && npm install && cd ..
+
+# Start development servers
 npm run dev
 ```
-Runs on http://localhost:5173
 
-### Backend Setup
-```bash
-cd backend
-npm install
-cp .env.example .env  # Configure your environment variables
-npm run dev
+## 📚 Documentation
+
+All project documentation has been organized in the `docs/` directory for better maintainability:
+
+### 📖 Main Documentation
+- **[Project Overview](docs/README.md)** - Complete project documentation with setup, deployment, and troubleshooting
+- **[Changelog](docs/CHANGELOG.md)** - Project history and version changes
+
+### 🔒 Security Documentation
+- **[Security Policy](docs/security/SECURITY.md)** - Responsible disclosure and security contact information
+- **[Security Checklist](docs/security/SECURITY_CHECKLIST.md)** - Developer security checklist (pin in Cursor)
+- **[Security Playbook](docs/security/SECURITY_PLAYBOOK.md)** - Comprehensive security guidelines and threat model
+- **[PR Security Template](docs/security/PR_SECURITY_TEMPLATE.md)** - Security review checklist for pull requests
+
+### 🚀 Deployment Documentation
+- **[Deployment Guide](docs/deployment/DEPLOYMENT.md)** - Comprehensive deployment instructions
+- **[Deployment Status](docs/deployment/DEPLOYMENT-STATUS.md)** - Current deployment readiness status
+- **[Docker Setup](docs/deployment/DOCKER-README.md)** - Docker configuration and usage
+
+### 🛠️ Development Documentation
+- **[Acceptance Checklist](docs/development/ACCEPTANCE_CHECKLIST.md)** - Code quality and deployment preparation checklist
+- **[PR Summary](docs/development/PR_SUMMARY.md)** - Pull request documentation and technical improvements
+- **[Development Environment](docs/development/replit.md)** - Development environment setup and architecture
+
+### 📁 Project Assets
+- **[Assets](docs/assets/)** - Project assets and additional content
+
+## 🏗️ Project Structure
+
 ```
-Runs on http://localhost:3000
-
-## 🌐 Production Deployment
-
-### Frontend Deployment (Vercel)
-
-1. **Connect Repository**: Fork this repo and connect it to Vercel
-2. **Configure Build Settings**:
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-   - Root Directory: `frontend`
-
-3. **Environment Variables** (in Vercel Dashboard):
-   ```
-   VITE_API_BASE_URL=https://your-backend.onrender.com/api
-   ```
-
-4. **Custom Domain** (Optional): Add your domain in Vercel settings
-
-### Backend Deployment (Render)
-
-1. **Connect Repository**: Connect your GitHub repo to Render
-2. **Service Configuration**:
-   - Type: Web Service
-   - Runtime: Node.js
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm start`
-   - Root Directory: `backend`
-
-3. **Environment Variables** (in Render Dashboard):
-   ```
-   NODE_ENV=production
-   PORT=10000
-   DATABASE_URL=your_postgres_connection_string
-   GROQ_BASE_URL=https://api.groq.com
-   GROQ_API_KEY=your_groq_api_key
-   GROQ_MODEL=groq/deepseek-r1-distill-llama-70b
-   CORS_ORIGIN=https://your-frontend.vercel.app
-   ```
-
-4. **Database**: Render will provision PostgreSQL automatically
-
-## 🔐 Environment Variables
-
-### Frontend (.env)
-```bash
-VITE_API_BASE_URL=http://localhost:3000/api  # Development
-VITE_API_BASE_URL=https://your-backend.onrender.com/api  # Production
+├── client/              # React + Vite frontend
+├── server/              # Express.js API server
+├── docs/                # 📚 Organized documentation
+│   ├── README.md        # Main project documentation
+│   ├── CHANGELOG.md     # Project history
+│   ├── security/        # Security documentation
+│   ├── deployment/      # Deployment guides
+│   ├── development/     # Development documentation
+│   └── assets/          # Project assets
+├── api/                 # API route handlers
+├── shared/              # Shared utilities and schemas
+└── tests/               # Test files
 ```
 
-### Backend (.env)
+## 🔧 Quick Commands
+
 ```bash
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/medflect
+# Development
+npm run dev              # Start development servers
+npm run build            # Build for production
+npm run test:smoke       # Run smoke tests
 
-# AI Service (Optional - will use mock responses if not configured)
-GROQ_BASE_URL=https://api.groq.com
-GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=groq/deepseek-r1-distill-llama-70b
+# Docker
+docker-compose up --build    # Start with Docker
+docker-compose down          # Stop Docker services
 
-# CORS
-CORS_ORIGIN=http://localhost:5173,https://your-frontend.vercel.app
-
-# Server
-PORT=3000  # Development (standardized)
-PORT=10000  # Production (Render requirement)
-NODE_ENV=development
+# Security
+npm audit                   # Check for vulnerabilities
+npm run lint:check          # Check code quality
+pre-commit run --all-files  # Run pre-commit hooks
 ```
 
-## 🔑 Required API Keys
+## 🔐 Security Features
 
-### GROQ AI (Optional - for AI summaries)
-1. Sign up at [Groq](https://console.groq.com/)
-2. Create an API key
-3. Add to backend environment variables:
-   - `GROQ_BASE_URL=https://api.groq.com`
-   - `GROQ_API_KEY=your_key_here`
+- **Comprehensive Security Playbook** - See [Security Documentation](docs/security/)
+- **Automated Security Scanning** - Pre-commit hooks and CI security checks
+- **Security Headers** - CSP, HSTS, X-Frame-Options, and other protective headers
+- **Rate Limiting** - Protection against abuse and brute force attacks
+- **Input Validation** - Zod schema validation throughout the application
 
-**Note**: AI features will show placeholder content if GROQ is not configured.
-
-## 🏗️ Build Commands
+## 📊 Tech Stack
 
 ### Frontend
-```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm run preview  # Preview production build
-npm start        # Serve production build
-```
+- **React 18** with TypeScript
+- **Vite** for build tooling
+- **Tailwind CSS** for styling
+- **Radix UI** for accessible components
+- **TanStack Query** for data fetching
 
 ### Backend
-```bash
-npm run dev      # Development with hot reload
-npm run build    # TypeScript compilation
-npm start        # Production server
-npm run db:push  # Push database schema
-```
+- **Node.js** with Express.js
+- **TypeScript** for type safety
+- **Drizzle ORM** with PostgreSQL
+- **Zod** for schema validation
+- **GROQ AI** for clinical summaries
 
-## 🛠️ Troubleshooting
+## 🆘 Support
 
+<<<<<<< HEAD
+- **Deployment Issues**: Check [Deployment Guide](docs/deployment/DEPLOYMENT.md)
+- **Security Issues**: See [Security Policy](docs/security/SECURITY.md)
+- **Development Questions**: Review [Development Documentation](docs/development/)
+=======
 ### Build Failures
 
 **Frontend Build Issues**:
@@ -226,19 +188,53 @@ If frontend can't connect to backend:
 - **Input Validation** - Zod schema validation
 - **Environment Variables** - Secure credential management
 - **Type Safety** - Full TypeScript coverage
+- **Security Playbook** - Comprehensive security documentation and CI checks (see SECURITY_PLAYBOOK.md)
+- **Automated Security Scanning** - Pre-commit hooks, CI security checks, and dependency monitoring
+- **Security Headers** - CSP, HSTS, X-Frame-Options, and other protective headers
+- **Rate Limiting** - Protection against abuse and brute force attacks
+
+### Security Implementation
+
+This project includes a comprehensive security playbook with:
+
+- **SECURITY_PLAYBOOK.md** - Developer-first security guidelines and threat model
+- **SECURITY_CHECKLIST.md** - One-page checklist for developers (pin in Cursor)
+- **SECURITY.md** - Responsible disclosure policy and contact information
+- **Pre-commit hooks** - Automated secret detection and code quality checks
+- **CI Security Pipeline** - Automated security scanning in GitHub Actions
+- **Dependabot** - Automated dependency updates and vulnerability monitoring
+- **Security Middleware** - Environment-configurable security headers and rate limiting
+
+### Quick Security Commands
+
+```bash
+# Run security checks locally
+npm audit --audit-level=moderate
+npm run lint:check
+npm run check:ci
+
+# Test pre-commit hooks
+pre-commit run --all-files
+
+# Test security headers
+curl -I http://localhost:5000/api/health
+```
+
+### Environment Security Variables
+
+```bash
+# Security configuration
+SECURE_HEADERS=true          # Enable security headers
+ENABLE_RATE_LIMITING=true    # Enable rate limiting
+CORS_ORIGIN=https://yourdomain.com  # Production CORS origins
+NODE_ENV=production          # Production mode
+```
+>>>>>>> 25341415f4b83efaaa8570316b27f3444adce31c
 
 ## 📄 License
 
 MIT License - see LICENSE file for details.
 
-## 🆘 Support
+---
 
-For deployment issues:
-- Check the troubleshooting section above
-- Review environment variable configuration
-- Ensure all required services are running
-
-For development questions:
-- Review the local development setup
-- Check console logs for errors
-- Verify API connectivity between frontend and backend
+**Note**: All detailed documentation has been moved to the `docs/` directory for better organization and maintainability. Start with the [Main Documentation](docs/README.md) for comprehensive setup and usage instructions.

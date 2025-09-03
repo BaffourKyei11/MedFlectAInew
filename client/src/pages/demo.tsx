@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIDemoSection from "@/components/demo/ai-demo-section";
 import PredictiveDemoSection from "@/components/demo/predictive-demo-section";
 import { Progress } from "@/components/ui/progress";
-import MedflectLogo from "@/components/ui/medflect-logo";
 import { 
   Brain, 
   Database, 
@@ -454,7 +453,15 @@ export default function Demo() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <MedflectLogo size="md" variant="dark" showText={true} />
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-medical-blue-500 rounded-lg flex items-center justify-center">
+                <Brain className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-xl font-bold text-clinical-gray-900">MEDFLECT AI</h2>
+                <p className="text-sm text-clinical-gray-500">Clinical Intelligence</p>
+              </div>
+            </div>
           </div>
           <h1 className="text-4xl font-bold text-clinical-gray-900 mb-4">
             MEDFLECT AI Live Demo

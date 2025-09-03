@@ -52,6 +52,7 @@
   --clinical-gray-50: hsl(210, 20%, 98%);
   --clinical-gray-100: hsl(210, 20%, 95%);
   --clinical-gray-200: hsl(210, 16%, 88%);
+  --clinical-gray-300: hsl(210, 15%, 75%);
   --clinical-gray-400: hsl(210, 14%, 53%);
   --clinical-gray-500: hsl(210, 14%, 46%);
   --clinical-gray-600: hsl(210, 16%, 38%);
@@ -110,6 +111,7 @@
   .bg-medical-blue-600 { background-color: var(--medical-blue-600); }
   .bg-medical-blue-700 { background-color: var(--medical-blue-700); }
   
+  .text-medical-blue-100 { color: var(--medical-blue-100); }
   .text-medical-blue-500 { color: var(--medical-blue-500); }
   .text-medical-blue-600 { color: var(--medical-blue-600); }
   .text-medical-blue-700 { color: var(--medical-blue-700); }
@@ -135,6 +137,7 @@
   
   .border-clinical-gray-200 { border-color: var(--clinical-gray-200); }
   .border-clinical-gray-300 { border-color: var(--clinical-gray-300); }
+  .border-clinical-gray-800 { border-color: var(--clinical-gray-800); }
   
   .hover\:bg-clinical-gray-100:hover { background-color: var(--clinical-gray-100); }
   .hover\:text-clinical-gray-800:hover { color: var(--clinical-gray-800); }
