@@ -41,7 +41,6 @@ try {
   // Test the connection
   pool.on('connect', (client) => {
     logger.debug('New database client connected', {
-      clientId: client?.processID,
       timestamp: new Date().toISOString(),
     });
   });
@@ -49,7 +48,6 @@ try {
   pool.on('error', (err: Error, client) => {
     logger.error('Database pool error', {
       error: err.message,
-      clientId: client?.processID,
       stack: err.stack,
       timestamp: new Date().toISOString(),
     });

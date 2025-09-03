@@ -994,6 +994,25 @@ export class MemStorage implements IStorage {
       .slice(0, limit);
   }
 
+  async createAuditLog(insertLog: Partial<AuditLog>): Promise<AuditLog> {
+    const log: AuditLog = {
+      ...insertLog,
+      id: randomUUID(),
+      timestamp: new Date(),
+      details: insertLog.details || {},
+      userId: insertLog.userId || null,
+      action: insertLog.action || '',
+      resource: insertLog.resource || '',
+      resourceId: insertLog.resourceId || null,
+      blockchainHash: insertLog.blockchainHash || null,
+      transactionHash: insertLog.transactionHash || null,
+      blockNumber: insertLog.blockNumber || null,
+      verified: insertLog.verified ?? false,
+    };
+    this.auditLogs.set(log.id, log);
+    return log;
+  }
+
   // Consent Record methods
   async getConsentRecord(id: string): Promise<ConsentRecord | undefined> {
     return this.consentRecords.get(id);
