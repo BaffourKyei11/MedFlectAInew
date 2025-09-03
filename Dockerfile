@@ -38,7 +38,9 @@ COPY healthcheck.js ./
 
 # Set ownership
 RUN chown -R medflect:nodejs /app
+# Run as non-root user
 USER medflect
+
 ENV NODE_ENV=production
 ENV PORT=3000
 
