@@ -2,47 +2,36 @@
 FROM node:18-alpine AS base
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8.15.4
 
 # Set working directory
 WORKDIR /app
 
-# Stage 1: Dependencies
+# Stage 1: Dependencies (cacheable by lockfile)
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* ./
-COPY client/package.json ./client/
 RUN pnpm install --frozen-lockfile
 
-# Stage 2: Build client
-FROM base AS client-builder
-WORKDIR /app/client
-COPY client/package.json ./
-RUN pnpm install --no-frozen-lockfile
-COPY client/ .
-RUN pnpm run build
-
-# Stage 3: Build server
-FROM base AS server-builder
+# Stage 2: Build (server + client)
+FROM base AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm run build:server
+# Uses root scripts: builds client and server
+RUN npm run build
 
-# Stage 4: Production
 FROM base AS production
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S medflect -u 1001
+RUN addgroup -g 1001 -S nodejs && adduser -S medflect -u 1001
 
 # Install production dependencies
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --prod --no-frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile
 
 # Copy built application
-COPY --from=server-builder /app/dist ./dist
-COPY --from=client-builder /app/client/dist ./dist/public
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/client/dist ./dist/public
 
 # Copy healthcheck
 COPY healthcheck.js ./
@@ -51,7 +40,9 @@ COPY healthcheck.js ./
 RUN chown -R medflect:nodejs /app
 USER medflect
 
-# Set environment
+# Set ownership and environment
+RUN chown -R medflect:nodejs /app
+USER medflect
 ENV NODE_ENV=production
 ENV PORT=3000
 
