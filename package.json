@@ -103,7 +103,7 @@
     "idb": "^8.0.3",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
-    "lucide-react": "^0.453.0",
+    "lucide-react": "^0.542.0",
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
     "morgan": "^1.10.0",
