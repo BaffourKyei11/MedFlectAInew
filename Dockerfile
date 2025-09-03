@@ -10,7 +10,7 @@ WORKDIR /app
 # Stage 1: Dependencies (cacheable by lockfile)
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # Stage 2: Build (server + client)
 FROM base AS builder
