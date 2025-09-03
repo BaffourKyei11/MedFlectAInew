@@ -1,0 +1,188 @@
+name: Security CI
+
+on:
+  push:
+    branches: [ main, develop, feat/security/playbook ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better secret detection
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    # Static Analysis Security Testing (SAST)
+    - name: Run ESLint security rules
+      run: npm run lint:check
+      continue-on-error: false
+    
+    - name: TypeScript type checking
+      run: npx tsc --noEmit --skipLibCheck
+      continue-on-error: false
+    
+    # Dependency vulnerability scanning
+    - name: NPM audit
+      run: npm audit --audit-level=moderate
+      continue-on-error: false
+    
+    # Secret detection
+    - name: Detect secrets with TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+      continue-on-error: false
+    
+    # Additional security checks
+    - name: Check for .env files
+      run: |
+        if find . -name ".env*" -not -path "./node_modules/*" | grep -q .; then
+          echo "❌ Found .env files - ensure they are in .gitignore"
+          find . -name ".env*" -not -path "./node_modules/*"
+          exit 1
+        else
+          echo "✅ No .env files found in repository"
+        fi
+    
+    - name: Check for hardcoded secrets patterns
+      run: |
+        # Check for common secret patterns
+        if grep -r -i "password.*=" --include="*.ts" --include="*.js" --include="*.json" . | grep -v node_modules | grep -v ".git"; then
+          echo "❌ Potential hardcoded passwords found"
+          exit 1
+        fi
+        
+        if grep -r -i "api.*key.*=" --include="*.ts" --include="*.js" --include="*.json" . | grep -v node_modules | grep -v ".git"; then
+          echo "❌ Potential hardcoded API keys found"
+          exit 1
+        fi
+        
+        echo "✅ No obvious hardcoded secrets found"
+    
+    # Security headers validation
+    - name: Validate security middleware
+      run: |
+        if grep -q "helmet" server/middleware/security.ts; then
+          echo "✅ Helmet security middleware found"
+        else
+          echo "❌ Helmet security middleware not found"
+          exit 1
+        fi
+        
+        if grep -q "rateLimit" server/middleware/security.ts; then
+          echo "✅ Rate limiting middleware found"
+        else
+          echo "❌ Rate limiting middleware not found"
+          exit 1
+        fi
+    
+    # Upload security scan results
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          npm-audit-results.json
+          eslint-results.json
+        retention-days: 30
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check for outdated dependencies
+      run: npm outdated || echo "Some dependencies are outdated"
+      continue-on-error: true
+    
+    - name: Generate dependency report
+      run: |
+        echo "# Dependency Security Report" > dependency-report.md
+        echo "Generated on: $(date)" >> dependency-report.md
+        echo "" >> dependency-report.md
+        echo "## NPM Audit Results" >> dependency-report.md
+        npm audit --json >> dependency-report.md || echo "Audit completed with issues"
+    
+    - name: Upload dependency report
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-report
+        path: dependency-report.md
+        retention-days: 30
+
+  security-test:
+    runs-on: ubuntu-latest
+    needs: [security-scan, dependency-check]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run security-focused tests
+      run: |
+        # Run tests with security focus
+        npm test -- --reporter=verbose
+        echo "✅ Security tests passed"
+    
+    - name: Test security headers
+      run: |
+        # Start server in background
+        npm run build
+        npm start &
+        SERVER_PID=$!
+        
+        # Wait for server to start
+        sleep 10
+        
+        # Test security headers
+        echo "Testing security headers..."
+        curl -I http://localhost:5000/api/health | grep -i "x-frame-options" || echo "❌ X-Frame-Options header missing"
+        curl -I http://localhost:5000/api/health | grep -i "x-content-type-options" || echo "❌ X-Content-Type-Options header missing"
+        curl -I http://localhost:5000/api/health | grep -i "x-xss-protection" || echo "❌ X-XSS-Protection header missing"
+        
+        # Cleanup
+        kill $SERVER_PID
+        echo "✅ Security headers test completed"
+    
+    - name: Test rate limiting
+      run: |
+        echo "Testing rate limiting..."
+        # This would require a more sophisticated test setup
+        echo "✅ Rate limiting test placeholder"

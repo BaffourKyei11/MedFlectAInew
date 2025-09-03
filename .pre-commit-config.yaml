@@ -1,0 +1,73 @@
+repos:
+  # Basic file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Secret detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json|pnpm-lock.yaml
+
+  # TypeScript/JavaScript linting
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.45.0
+    hooks:
+      - id: eslint
+        files: \.(js|ts|tsx)$
+        types: [file]
+        additional_dependencies:
+          - eslint@^8.45.0
+          - '@typescript-eslint/eslint-plugin@^6.0.0'
+          - '@typescript-eslint/parser@^6.0.0'
+          - 'eslint-plugin-react-hooks@^4.6.0'
+          - 'eslint-plugin-react-refresh@^0.4.3'
+
+  # Prettier formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0
+    hooks:
+      - id: prettier
+        files: \.(js|ts|tsx|json|md|yaml|yml)$
+        exclude: package-lock.json|pnpm-lock.yaml
+
+  # TypeScript type checking
+  - repo: local
+    hooks:
+      - id: typescript-check
+        name: TypeScript Check
+        entry: npx tsc --noEmit
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
+
+  # Security-focused checks
+  - repo: local
+    hooks:
+      - id: npm-audit
+        name: NPM Audit
+        entry: npm audit --audit-level=moderate
+        language: system
+        files: package\.json$
+        pass_filenames: false
+        always_run: true
+
+      - id: check-env-files
+        name: Check for .env files
+        entry: bash -c 'if find . -name ".env*" -not -path "./node_modules/*" | grep -q .; then echo "Found .env files - ensure they are in .gitignore"; exit 1; fi'
+        language: system
+        always_run: true

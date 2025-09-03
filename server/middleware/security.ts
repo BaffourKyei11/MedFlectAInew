@@ -3,43 +3,86 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cors from 'cors';
 
+// Environment-based security configuration
+const isProduction = process.env.NODE_ENV === 'production';
+const enableSecurityHeaders = process.env.SECURE_HEADERS === 'true' || isProduction;
+const enableRateLimiting = process.env.ENABLE_RATE_LIMITING === 'true' || isProduction;
+
 // CORS Configuration
 export const corsConfig = cors({
-  origin: process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || '*',
+  origin: process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || (isProduction ? false : '*'),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400, // 24 hours
+  optionsSuccessStatus: 200
 });
 
-// Rate Limiting
+// General API Rate Limiting
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: enableRateLimiting ? 100 : 1000, // More lenient in development
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
     status: 'error',
     message: 'Too many requests, please try again later.'
+  },
+  skip: (req) => {
+    // Skip rate limiting for health checks
+    return req.path === '/api/health';
   }
+});
+
+// Strict rate limiting for authentication endpoints
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Only 5 attempts per 15 minutes for auth
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { 
+    status: 'error',
+    message: 'Too many authentication attempts, please try again later.'
+  },
+  skipSuccessfulRequests: true
 });
 
 // Security Headers
 export const securityHeaders = [
-  // Helmet security headers
-  helmet(),
+  // Helmet security headers with environment-based configuration
+  helmet({
+    contentSecurityPolicy: enableSecurityHeaders ? {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Note: Consider removing unsafe-inline/eval in production
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        fontSrc: ["'self'"],
+        connectSrc: ["'self'", "https://api.groq.com"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"]
+      }
+    } : false,
+    hsts: isProduction ? {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    } : false,
+    noSniff: true,
+    xssFilter: true,
+    frameguard: { action: 'deny' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+  }),
   
   // Additional security headers
-  (_req: Request, res: Response, next: NextFunction) => {
-    const isDev = process.env.NODE_ENV === 'development';
-    const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || [];
-    const connectSrc = [
-      "'self'",
-      'https://api.groq.com',
-      ...corsOrigins,
-      ...(isDev ? ['http://localhost:3000', 'http://localhost:5173', 'ws://localhost:5173'] : [])
-    ].join(' ');
-
+  (req: Request, res: Response, next: NextFunction) => {
+    if (!enableSecurityHeaders) {
+      return next();
+    }
+    
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
     
@@ -49,36 +92,22 @@ export const securityHeaders = [
     // Prevent clickjacking
     res.setHeader('X-Frame-Options', 'DENY');
     
-    // Content Security Policy
-    res.setHeader(
-      'Content-Security-Policy',
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data:; " +
-      "font-src 'self'; " +
-      `connect-src ${connectSrc};`
-    );
-    
-    // Feature Policy
-    res.setHeader(
-      'Feature-Policy',
-      "geolocation 'none'; microphone 'none'; camera 'none'"
-    );
-    
     // Referrer Policy
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     
-    // Permissions Policy
+    // Permissions Policy (replaces Feature Policy)
     res.setHeader(
       'Permissions-Policy',
-      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+      'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
     );
     
-    // HSTS (only in production)
-    if (process.env.NODE_ENV === 'production') {
-      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // HSTS (only in production with HTTPS)
+    if (isProduction && req.secure) {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     }
+    
+    // Remove server information
+    res.removeHeader('X-Powered-By');
     
     next();
   }

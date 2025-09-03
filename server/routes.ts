@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
+import logger from "./utils/logger";
 import { insertImplementationCallSchema, insertPilotApplicationSchema } from "@shared/schema";
 import { groqService } from "./services/groq";
 import { fhirService } from "./services/fhir";
@@ -113,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tokensUsed: aiResponse.tokensUsed,
       });
     } catch (error) {
-      console.error("AI summary generation failed:", error);
+      logger.error("AI summary generation failed:", { error: error instanceof Error ? error.message : "Unknown error" });
       res.status(500).json({ 
         message: "Failed to generate AI summary",
         error: error instanceof Error ? error.message : "Unknown error"
@@ -422,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/analytics/predict/resources", async (req, res) => {
     try {
       const { hospitalId, timeframe } = req.body;
-      console.log('[Resource Prediction] Request:', { hospitalId, timeframe });
+      logger.info('[Resource Prediction] Request:', { hospitalId, timeframe });
       
       // Convert string dates to Date objects
       const processedTimeframe = {
@@ -434,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const prediction = await predictiveService.predictResourceNeeds(hospitalId, processedTimeframe);
       res.json(prediction);
     } catch (error) {
-      console.error('[Resource Prediction] Error:', error);
+      logger.error('[Resource Prediction] Error:', { error: error instanceof Error ? error.message : "Unknown error" });
       res.status(500).json({ 
         message: "Failed to predict resource needs",
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -708,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error: any) {
-      console.error('Connection validation error:', error);
+      logger.error('Connection validation error:', { error: error.message });
       res.status(400).json({
         message: "Validation failed",
         error: error.message
@@ -745,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(safeConnection);
 
     } catch (error: any) {
-      console.error('Connection creation error:', error);
+      logger.error('Connection creation error:', { error: error.message });
       res.status(400).json({
         message: "Failed to create connection",
         error: error.message
@@ -770,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(safeConnections);
 
     } catch (error: any) {
-      console.error('Connection fetch error:', error);
+      logger.error('Connection fetch error:', { error: error.message });
       res.status(500).json({
         message: "Failed to fetch connections",
         error: error.message
@@ -791,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(safeConnection);
 
     } catch (error: any) {
-      console.error('Connection fetch error:', error);
+      logger.error('Connection fetch error:', { error: error.message });
       res.status(500).json({
         message: "Failed to fetch connection",
         error: error.message
@@ -829,7 +830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(safeConnection);
 
     } catch (error: any) {
-      console.error('Connection update error:', error);
+      logger.error('Connection update error:', { error: error.message });
       res.status(400).json({
         message: "Failed to update connection",
         error: error.message
@@ -858,7 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
 
     } catch (error: any) {
-      console.error('Connection deletion error:', error);
+      logger.error('Connection deletion error:', { error: error.message });
       res.status(500).json({
         message: "Failed to delete connection",
         error: error.message
@@ -872,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mappings = await storage.getEhrMappingsByConnection(req.params.connectionId);
       res.json(mappings);
     } catch (error: any) {
-      console.error('Mapping fetch error:', error);
+      logger.error('Mapping fetch error:', { error: error.message });
       res.status(500).json({
         message: "Failed to fetch mappings",
         error: error.message
@@ -891,7 +892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(mapping);
 
     } catch (error: any) {
-      console.error('Mapping creation error:', error);
+      logger.error('Mapping creation error:', { error: error.message });
       res.status(400).json({
         message: "Failed to create mapping",
         error: error.message
@@ -935,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: "Webhook received successfully" });
 
     } catch (error: any) {
-      console.error('Webhook processing error:', error);
+      logger.error('Webhook processing error:', { error: error.message });
       res.status(500).json({
         message: "Failed to process webhook",
         error: error.message
