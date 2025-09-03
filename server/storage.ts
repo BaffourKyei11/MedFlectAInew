@@ -144,7 +144,7 @@ export class DatabaseStorage implements IStorage {
     
     const [user] = await db
       .insert(users)
-      .values(userWithId)
+      .values([userWithId])
       .returning();
     return user;
   }
@@ -174,7 +174,7 @@ export class DatabaseStorage implements IStorage {
     
     const [patient] = await db
       .insert(patients)
-      .values(patientWithId)
+      .values([patientWithId])
       .returning();
     return patient;
   }
@@ -208,7 +208,7 @@ export class DatabaseStorage implements IStorage {
     
     const [summary] = await db
       .insert(clinicalSummaries)
-      .values(summaryWithId)
+      .values([summaryWithId])
       .returning();
     return summary;
   }
@@ -241,7 +241,7 @@ export class DatabaseStorage implements IStorage {
     
     const [metrics] = await db
       .insert(hospitalMetrics)
-      .values(metricsWithId)
+      .values([metricsWithId])
       .returning();
     return metrics;
   }
@@ -268,7 +268,7 @@ export class DatabaseStorage implements IStorage {
     
     const [alert] = await db
       .insert(riskAlerts)
-      .values(alertWithId)
+      .values([alertWithId])
       .returning();
     return alert;
   }
@@ -301,7 +301,7 @@ export class DatabaseStorage implements IStorage {
     
     const [log] = await db
       .insert(auditLogs)
-      .values(logWithId)
+      .values([logWithId])
       .returning();
     return log;
   }
@@ -326,7 +326,7 @@ export class DatabaseStorage implements IStorage {
     
     const [consent] = await db
       .insert(consentRecords)
-      .values(consentWithId)
+      .values([consentWithId])
       .returning();
     return consent;
   }
@@ -360,7 +360,7 @@ export class DatabaseStorage implements IStorage {
     
     const [hospital] = await db
       .insert(hospitals)
-      .values(hospitalWithId)
+      .values([hospitalWithId])
       .returning();
     return hospital;
   }
@@ -394,7 +394,7 @@ export class DatabaseStorage implements IStorage {
     
     const [prediction] = await db
       .insert(predictions)
-      .values(predictionWithId)
+      .values([predictionWithId])
       .returning();
     return prediction;
   }
@@ -437,7 +437,7 @@ export class DatabaseStorage implements IStorage {
     
     const [result] = await db
       .insert(implementationCalls)
-      .values(callWithId)
+      .values([callWithId])
       .returning();
     return result;
   }
@@ -471,7 +471,7 @@ export class DatabaseStorage implements IStorage {
     
     const [result] = await db
       .insert(pilotApplications)
-      .values(appWithId)
+      .values([appWithId])
       .returning();
     return result;
   }
@@ -514,7 +514,7 @@ export class DatabaseStorage implements IStorage {
     
     const [result] = await db
       .insert(ehrConnections)
-      .values(connectionWithId)
+      .values([connectionWithId])
       .returning();
     return result;
   }
@@ -553,7 +553,7 @@ export class DatabaseStorage implements IStorage {
     
     const [result] = await db
       .insert(ehrMappings)
-      .values(mappingWithId)
+      .values([mappingWithId])
       .returning();
     return result;
   }
@@ -599,7 +599,7 @@ export class DatabaseStorage implements IStorage {
     
     const [result] = await db
       .insert(webhookEvents)
-      .values(eventWithId)
+      .values([eventWithId])
       .returning();
     return result;
   }
@@ -657,7 +657,7 @@ export class DatabaseStorage implements IStorage {
     
     const [newLog] = await db
       .insert(ehrAuditLogs)
-      .values(logWithDefaults)
+      .values([logWithDefaults])
       .returning();
     return newLog;
   }
@@ -989,19 +989,9 @@ export class MemStorage implements IStorage {
 
   // Audit Log methods
   async getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
-
-async createRiskAlert(insertAlert: Partial<RiskAlert>): Promise<RiskAlert> {
-  const alert: RiskAlert = {
-    ...insertAlert,
-    id: randomUUID(),
-    patientId: insertAlert.patientId || null,
-    riskScore: insertAlert.riskScore || null,
-    resolved: insertAlert.resolved ?? false,
-    createdAt: new Date()
-  };
-  this.riskAlerts.set(alert.id, alert);
-  return alert;
-}
+    return Array.from(this.auditLogs.values())
+      .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0))
+      .slice(0, limit);
   }
 
   // Consent Record methods
