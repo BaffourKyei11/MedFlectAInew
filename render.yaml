@@ -1,15 +1,11 @@
 services:
   - type: web
     name: medflect-ai-backend
-    env: node
+    env: docker
     region: oregon  # Choose the closest region to your users
-    buildCommand: ./render-start.sh build
-    startCommand: ./render-start.sh start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: NODE_OPTIONS
         value: --max-old-space-size=1024
       - key: GROQ_BASE_URL

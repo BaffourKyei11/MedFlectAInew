@@ -42,10 +42,9 @@ RUN chown -R medflect:nodejs /app
 USER medflect
 
 ENV NODE_ENV=production
-ENV PORT=3000
 
 # Expose port
-EXPOSE 3000
+EXPOSE 10000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
