@@ -27,7 +27,7 @@ RUN addgroup -g 1001 -S nodejs && adduser -S medflect -u 1001
 
 # Install production dependencies
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --prod --no-frozen-lockfile
+RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
