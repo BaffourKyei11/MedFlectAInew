@@ -1,33 +1,19 @@
 import { 
   type User, 
-  type InsertUser,
   type Patient,
-  type InsertPatient,
   type ClinicalSummary,
-  type InsertClinicalSummary,
   type HospitalMetrics,
   type RiskAlert,
-  type InsertRiskAlert,
   type AuditLog,
-  type InsertAuditLog,
   type ConsentRecord,
-  type InsertConsentRecord,
   type Hospital,
-  type InsertHospital,
   type Prediction,
-  type InsertPrediction,
   type ImplementationCall,
-  type InsertImplementationCall,
   type PilotApplication,
-  type InsertPilotApplication,
   type EhrConnection,
-  type InsertEhrConnection,
   type EhrMapping,
-  type InsertEhrMapping,
   type WebhookEvent,
-  type InsertWebhookEvent,
   type EhrAuditLog,
-  type InsertEhrAuditLog,
   users,
   patients,
   clinicalSummaries,
@@ -148,7 +134,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: Partial<User>): Promise<User> {
     const userWithId = {
       ...insertUser,
       id: randomUUID(),
@@ -178,7 +164,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(patients);
   }
 
-  async createPatient(insertPatient: InsertPatient): Promise<Patient> {
+  async createPatient(insertPatient: Partial<Patient>): Promise<Patient> {
     const patientWithId = {
       ...insertPatient,
       id: randomUUID(),
@@ -629,32 +615,51 @@ export class DatabaseStorage implements IStorage {
 
   // EHR Audit Log methods
   async getEhrAuditLogs(connectionId?: string, limit: number = 100): Promise<EhrAuditLog[]> {
-    let query = db.select().from(ehrAuditLogs);
-    
-    if (connectionId) {
-      query = query.where(eq(ehrAuditLogs.connectionId, connectionId)) as any;
+    try {
+      if (connectionId) {
+        return await db
+          .select()
+          .from(ehrAuditLogs)
+          .where(eq(ehrAuditLogs.connectionId, connectionId))
+          .orderBy(desc(ehrAuditLogs.timestamp))
+          .limit(limit);
+      }
+      return await db
+        .select()
+        .from(ehrAuditLogs)
+        .orderBy(desc(ehrAuditLogs.timestamp))
+        .limit(limit);
+    } catch (error) {
+      console.error('Error fetching EHR audit logs:', error);
+      throw error;
     }
-    
-    return await query
-      .orderBy(desc(ehrAuditLogs.timestamp))
-      .limit(limit);
   }
 
   async createEhrAuditLog(log: Partial<EhrAuditLog>): Promise<EhrAuditLog> {
-    const logWithId = {
+    if (!log.connectionId) {
+      throw new Error('connectionId is required');
+    }
+    if (!log.userId) {
+      throw new Error('userId is required');
+    }
+    if (!log.action) {
+      throw new Error('action is required');
+    }
+
+    const logWithDefaults: EhrAuditLog = {
       ...log,
       id: randomUUID(),
-      timestamp: new Date(),
       details: log.details || {},
       ipAddress: log.ipAddress || null,
       userAgent: log.userAgent || null,
+      timestamp: new Date(),
     };
     
-    const [result] = await db
+    const [newLog] = await db
       .insert(ehrAuditLogs)
-      .values(logWithId)
+      .values(logWithDefaults)
       .returning();
-    return result;
+    return newLog;
   }
 }
 
@@ -984,26 +989,19 @@ export class MemStorage implements IStorage {
 
   // Audit Log methods
   async getAuditLogs(limit: number = 100): Promise<AuditLog[]> {
-    return Array.from(this.auditLogs.values())
-      .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0))
-      .slice(0, limit);
-  }
 
-  async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
-    const log: AuditLog = {
-      ...insertLog,
-      id: randomUUID(),
-      timestamp: new Date(),
-      userId: insertLog.userId || null,
-      verified: insertLog.verified ?? false,
-      blockchainHash: insertLog.blockchainHash || null,
-      resourceId: insertLog.resourceId || null,
-      transactionHash: insertLog.transactionHash || null,
-      blockNumber: insertLog.blockNumber || null,
-      details: insertLog.details || {},
-    };
-    this.auditLogs.set(log.id, log);
-    return log;
+async createRiskAlert(insertAlert: Partial<RiskAlert>): Promise<RiskAlert> {
+  const alert: RiskAlert = {
+    ...insertAlert,
+    id: randomUUID(),
+    patientId: insertAlert.patientId || null,
+    riskScore: insertAlert.riskScore || null,
+    resolved: insertAlert.resolved ?? false,
+    createdAt: new Date()
+  };
+  this.riskAlerts.set(alert.id, alert);
+  return alert;
+}
   }
 
   // Consent Record methods
@@ -1329,26 +1327,40 @@ export class MemStorage implements IStorage {
 
   // EHR Audit Log methods
   async getEhrAuditLogs(connectionId?: string, limit: number = 100): Promise<EhrAuditLog[]> {
-    let query = db.select().from(ehrAuditLogs);
-    
-    if (connectionId) {
-      query = query.where(eq(ehrAuditLogs.connectionId, connectionId)) as any;
+    try {
+      let logs = Array.from(this.ehrAuditLogs.values());
+      if (connectionId) {
+        logs = logs.filter(log => log.connectionId === connectionId);
+      }
+      return logs
+        .sort((a, b) => (b.timestamp?.getTime() || 0) - (a.timestamp?.getTime() || 0))
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error fetching in-memory EHR audit logs:', error);
+      throw error;
     }
-    
-    return await query
-      .orderBy(desc(ehrAuditLogs.timestamp))
-      .limit(limit);
   }
 
   async createEhrAuditLog(insertLog: Partial<EhrAuditLog>): Promise<EhrAuditLog> {
+    if (!insertLog.connectionId) {
+      throw new Error('connectionId is required');
+    }
+    if (!insertLog.userId) {
+      throw new Error('userId is required');
+    }
+    if (!insertLog.action) {
+      throw new Error('action is required');
+    }
+
     const log: EhrAuditLog = {
       ...insertLog,
       id: randomUUID(),
-      timestamp: new Date(),
       details: insertLog.details || {},
       ipAddress: insertLog.ipAddress || null,
       userAgent: insertLog.userAgent || null,
+      timestamp: new Date(),
     };
+    
     this.ehrAuditLogs.set(log.id, log);
     return log;
   }

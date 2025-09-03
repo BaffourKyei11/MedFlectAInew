@@ -10,7 +10,7 @@ WORKDIR /app
 # Stage 1: Dependencies (cacheable by lockfile)
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # Stage 2: Build (server + client)
 FROM base AS builder
@@ -21,13 +21,15 @@ COPY . .
 RUN npm run build
 
 FROM base AS production
+ENV NODE_ENV=production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S medflect -u 1001
 
 # Install production dependencies
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --prod --no-frozen-lockfile --ignore-scripts
+COPY --from=builder /app/dist/package.json ./package.json
+COPY pnpm-lock.yaml* ./
+RUN pnpm deploy --prod .
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
