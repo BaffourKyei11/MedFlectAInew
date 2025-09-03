@@ -86,7 +86,7 @@ Runs on http://localhost:3000
    GROQ_BASE_URL=https://api.groq.com
    GROQ_API_KEY=your_groq_api_key
    GROQ_MODEL=groq/deepseek-r1-distill-llama-70b
-   FRONTEND_URL=https://your-frontend.vercel.app
+   CORS_ORIGIN=https://your-frontend.vercel.app
    ```
 
 4. **Database**: Render will provision PostgreSQL automatically
@@ -110,10 +110,10 @@ GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=groq/deepseek-r1-distill-llama-70b
 
 # CORS
-FRONTEND_URL=http://localhost:5173,https://your-frontend.vercel.app
+CORS_ORIGIN=http://localhost:5173,https://your-frontend.vercel.app
 
 # Server
-PORT=3000  # Development
+PORT=3000  # Development (standardized)
 PORT=10000  # Production (Render requirement)
 NODE_ENV=development
 ```
@@ -162,9 +162,9 @@ npm run db:push  # Push database schema
 ### CORS Issues
 
 If frontend can't connect to backend:
-1. Add your Vercel domain to `FRONTEND_URL` in backend env vars
-2. Ensure CORS middleware is properly configured
-3. Check that API calls use correct base URL
+1. Add your Vercel domain to `CORS_ORIGIN` (comma-separated allowed origins)
+2. Ensure CORS middleware and CSP headers are configured (see `server/middleware/security.ts`)
+3. Check that API calls use the correct base URL (`VITE_API_BASE_URL`)
 
 ### Database Issues
 

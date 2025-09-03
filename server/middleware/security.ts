@@ -30,7 +30,16 @@ export const securityHeaders = [
   helmet(),
   
   // Additional security headers
-  (req: Request, res: Response, next: NextFunction) => {
+  (_req: Request, res: Response, next: NextFunction) => {
+    const isDev = process.env.NODE_ENV === 'development';
+    const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || [];
+    const connectSrc = [
+      "'self'",
+      'https://api.groq.com',
+      ...corsOrigins,
+      ...(isDev ? ['http://localhost:3000', 'http://localhost:5173', 'ws://localhost:5173'] : [])
+    ].join(' ');
+
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
     
@@ -48,7 +57,7 @@ export const securityHeaders = [
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data:; " +
       "font-src 'self'; " +
-      "connect-src 'self' https://api.groq.com;"
+      `connect-src ${connectSrc};`
     );
     
     // Feature Policy

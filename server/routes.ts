@@ -27,6 +27,19 @@ const updateSummarySchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Root route - helpful message for base URL
+  app.get("/", (_req, res) => {
+    res.json({
+      status: "ok",
+      message: "MedFlectAI backend is running",
+      helpfulEndpoints: [
+        "/api/health",
+        "/api/ai/status",
+        "/api/metrics"
+      ]
+    });
+  });
+
   // AI Routes
   app.get("/api/ai/status", async (req, res) => {
     try {

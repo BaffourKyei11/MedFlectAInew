@@ -26,6 +26,8 @@ services:
         value: groq/deepseek-r1-distill-llama-70b
       - key: VITE_API_BASE
         value: https://medflect-ai-backend.onrender.com
+      - key: VITE_API_BASE_URL
+        value: https://medflect-ai-backend.onrender.com/api
       - key: JWT_SECRET
         fromService:
           name: medflect-ai-backend
